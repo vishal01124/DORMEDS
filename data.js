@@ -130,26 +130,31 @@ const SEED = {
      status:'delivered',items:[{mid:'M1',name:'Dolo 650',qty:2,price:28},{mid:'M10',name:'Becosules Z',qty:1,price:29}],
      subtotal:85,delFee:25,discount:10,total:100,payMethod:'UPI',payStatus:'paid',
      address:'42, Sector 15, Noida, UP 201301',hasRx:false,rxStatus:null,emergency:false,
+     deliveryOtp:'7823',otpVerified:true,pickupChecklist:[true,true,true,true],
      rating:5,review:'Fast delivery!',createdAt:'2025-03-28T10:30:00Z',updatedAt:'2025-03-28T11:15:00Z'},
     {id:'O2',uid:'U2',uName:'Priya Patel',phId:'P2',phName:'Apollo Pharmacy',dId:'D3',dName:'Manoj Tiwari',
      status:'out_for_delivery',items:[{mid:'M6',name:'Glycomet 500',qty:1,price:38},{mid:'M12',name:'Shelcal 500',qty:1,price:148}],
      subtotal:186,delFee:30,discount:20,total:196,payMethod:'COD',payStatus:'pending',
      address:'18, MG Road, Bengaluru 560001',hasRx:true,rxStatus:'verified',emergency:false,
+     deliveryOtp:'4521',otpVerified:false,pickupChecklist:[true,true,true,true],
      rating:null,review:null,createdAt:'2025-04-14T08:00:00Z',updatedAt:'2025-04-14T09:30:00Z'},
     {id:'O3',uid:'U1',uName:'Rahul Sharma',phId:'P3',phName:'NetMeds Store',dId:null,dName:null,
      status:'preparing',items:[{mid:'M15',name:'Cetirizine 10mg',qty:3,price:14},{mid:'M23',name:'Betadine Solution',qty:1,price:72}],
      subtotal:114,delFee:25,discount:0,total:139,payMethod:'UPI',payStatus:'paid',
      address:'42, Sector 15, Noida 201301',hasRx:false,rxStatus:null,emergency:true,
+     deliveryOtp:'2967',otpVerified:false,pickupChecklist:[false,false,false,false],
      rating:null,review:null,createdAt:'2025-04-14T09:15:00Z',updatedAt:'2025-04-14T09:20:00Z'},
     {id:'O4',uid:'U3',uName:'Amit Kumar',phId:'P1',phName:'MedPlus',dId:null,dName:null,
      status:'pending',items:[{mid:'M19',name:'Betnovate C',qty:1,price:56},{mid:'M26',name:'Soframycin Cream',qty:2,price:44}],
      subtotal:144,delFee:25,discount:15,total:154,payMethod:'COD',payStatus:'pending',
-     address:'101, Lajpat Nagar, New Delhi 110024',hasRx:true,rxStatus:'pending',emergency:false,
+     address:'101, Lajpat Nagar, New Delhi 110024',hasRx:true,rxStatus:'pending_review',emergency:false,
+     deliveryOtp:null,otpVerified:false,pickupChecklist:[false,false,false,false],
      rating:null,review:null,createdAt:'2025-04-14T09:45:00Z',updatedAt:'2025-04-14T09:45:00Z'},
     {id:'O5',uid:'U2',uName:'Priya Patel',phId:'P4',phName:'1mg Health Store',dId:'D2',dName:'Sunil Yadav',
      status:'delivered',items:[{mid:'M13',name:'Limcee 500',qty:2,price:21},{mid:'M11',name:'Supradyn Daily',qty:1,price:38}],
      subtotal:80,delFee:0,discount:10,total:70,payMethod:'UPI',payStatus:'paid',
      address:'18, MG Road, Bengaluru 560001',hasRx:false,rxStatus:null,emergency:false,
+     deliveryOtp:'9134',otpVerified:true,pickupChecklist:[true,true,true,true],
      rating:4,review:'Good service.',createdAt:'2025-03-20T14:00:00Z',updatedAt:'2025-03-20T15:30:00Z'},
   ],
 
@@ -215,6 +220,97 @@ const SEED = {
   },
 
   searchHistory: ['Dolo 650', 'Vitamin C', 'Diabetes medicine', 'Crocin'],
+
+  // ---- DORMEDS 3.0 NEW TABLES ----
+
+  subscription_plans: [
+    { id:'SP1', name:'Basic', price:199, period:'monthly', color:'#3B82F6',
+      benefits:['Free delivery on all orders','10% off all medicines','Priority order processing','Smart refill reminders'],
+      icon:'💊', popular:false, createdAt:'2025-01-01' },
+    { id:'SP2', name:'Premium', price:499, period:'monthly', color:'#8B5CF6',
+      benefits:['Everything in Basic','2 free BPT sessions/month','Priority lab test booking','Patient counsellor access','Exclusive health reports','15% off all services'],
+      icon:'⭐', popular:true, createdAt:'2025-01-01' },
+  ],
+
+  subscriptions: [
+    { id:'SUB1', userId:'U1', planId:'SP2', planName:'Premium', status:'active',
+      startDate:'2025-04-01', endDate:'2025-05-01', autoRenew:true,
+      bptCredits:2, bptUsed:0, payMethod:'UPI', amount:499,
+      createdAt:'2025-04-01T10:00:00Z' },
+    { id:'SUB2', userId:'U2', planId:'SP1', planName:'Basic', status:'active',
+      startDate:'2025-04-10', endDate:'2025-05-10', autoRenew:true,
+      bptCredits:0, bptUsed:0, payMethod:'UPI', amount:199,
+      createdAt:'2025-04-10T08:00:00Z' },
+  ],
+
+  bpt_sessions: [
+    { id:'BS1', day:'Monday', slots:['09:00','10:00','11:00','14:00','15:00','16:00'], therapist:'Dr. Meera Joshi', exp:'8 yrs', rating:4.8 },
+    { id:'BS2', day:'Tuesday', slots:['09:00','10:00','11:00','14:00','15:00'], therapist:'Dr. Arjun Nair', exp:'5 yrs', rating:4.6 },
+    { id:'BS3', day:'Wednesday', slots:['10:00','11:00','14:00','16:00'], therapist:'Dr. Meera Joshi', exp:'8 yrs', rating:4.8 },
+    { id:'BS4', day:'Thursday', slots:['09:00','11:00','14:00','15:00','16:00'], therapist:'Dr. Arjun Nair', exp:'5 yrs', rating:4.6 },
+    { id:'BS5', day:'Friday', slots:['09:00','10:00','14:00','15:00'], therapist:'Dr. Meera Joshi', exp:'8 yrs', rating:4.8 },
+    { id:'BS6', day:'Saturday', slots:['09:00','10:00','11:00'], therapist:'Dr. Arjun Nair', exp:'5 yrs', rating:4.6 },
+  ],
+
+  bpt_bookings: [
+    { id:'BB1', userId:'U1', day:'Monday', slot:'10:00', visitType:'home',
+      therapist:'Dr. Meera Joshi', condition:'Lower back pain', price:800, status:'confirmed',
+      address:'42, Sector 15, Noida, UP 201301', usedCredit:true,
+      createdAt:'2025-04-12T09:00:00Z', sessionDate:'2025-04-21' },
+  ],
+
+  lab_tests: [
+    { id:'LT1', name:'Complete Blood Count (CBC)', category:'Blood Test', price:350, homeCollection:true, reportTime:'24 hrs', icon:'🩸' },
+    { id:'LT2', name:'HbA1c (Diabetes Test)', category:'Blood Test', price:550, homeCollection:true, reportTime:'24 hrs', icon:'🩸' },
+    { id:'LT3', name:'Lipid Profile', category:'Blood Test', price:650, homeCollection:true, reportTime:'24 hrs', icon:'🩸' },
+    { id:'LT4', name:'Thyroid Function Test (TFT)', category:'Hormone Test', price:750, homeCollection:true, reportTime:'48 hrs', icon:'🦋' },
+    { id:'LT5', name:'Urine Routine Examination', category:'Urine Test', price:200, homeCollection:false, reportTime:'12 hrs', icon:'🧪' },
+    { id:'LT6', name:'Chest X-Ray', category:'Radiology', price:400, homeCollection:false, reportTime:'2 hrs', icon:'🫁' },
+    { id:'LT7', name:'Vitamin D Test', category:'Blood Test', price:1200, homeCollection:true, reportTime:'48 hrs', icon:'☀️' },
+    { id:'LT8', name:'Liver Function Test (LFT)', category:'Blood Test', price:850, homeCollection:true, reportTime:'24 hrs', icon:'🫁' },
+  ],
+
+  lab_bookings: [
+    { id:'LB1', userId:'U2', testId:'LT2', testName:'HbA1c (Diabetes Test)', homeCollection:true,
+      slot:'08:00 AM', bookingDate:'2025-04-16', price:600, status:'confirmed',
+      address:'18, MG Road, Bengaluru 560001', reportUrl:null,
+      createdAt:'2025-04-14T11:00:00Z' },
+  ],
+
+  support_tickets: [
+    { id:'TK1', userId:'U1', userName:'Rahul Sharma', orderId:'O3', subject:'Order delayed',
+      description:'My emergency order O3 has been in preparing status for too long.',
+      priority:'high', status:'open', agentId:null, agentName:null,
+      messages:[
+        {from:'user',text:'My order is stuck in preparing state for 2 hours. Please help!',time:'2025-04-14T11:00:00Z'},
+      ],
+      createdAt:'2025-04-14T11:00:00Z', updatedAt:'2025-04-14T11:00:00Z' },
+    { id:'TK2', userId:'U2', userName:'Priya Patel', orderId:'O2', subject:'Wrong medicine delivered',
+      description:'Received different brand than ordered.',
+      priority:'medium', status:'in_progress', agentId:'ADM-S1', agentName:'Support Agent Kavya',
+      messages:[
+        {from:'user',text:'Wrong brand delivered. I ordered Shelcal but got a different calcium tablet.',time:'2025-04-13T16:00:00Z'},
+        {from:'agent',text:'We apologize for the inconvenience. Can you share a photo of the delivered product?',time:'2025-04-13T16:30:00Z'},
+      ],
+      createdAt:'2025-04-13T16:00:00Z', updatedAt:'2025-04-13T16:30:00Z' },
+  ],
+
+  admin_roles: [
+    { id:'ADM-O1', name:'Vishal Sharma', role:'owner', phone:'9999999999', avatar:'VS',
+      permissions:['all'], createdAt:'2024-01-01' },
+    { id:'ADM-S1', name:'Kavya Reddy', role:'support', phone:'9999999998', avatar:'KR',
+      permissions:['tickets','orders','users'], createdAt:'2024-03-01' },
+    { id:'ADM-C1', name:'Dr. Prathap Rao', role:'counsellor', phone:'9999999997', avatar:'PR',
+      permissions:['patients','logs','schedule'], createdAt:'2024-03-01' },
+  ],
+
+  counselling_logs: [
+    { id:'CL1', counsellorId:'ADM-C1', counsellorName:'Dr. Prathap Rao',
+      patientId:'U1', patientName:'Rahul Sharma', type:'follow_up',
+      notes:'Patient reports persisting lower back pain. Recommended BPT sessions 3x/week. Suggested Vitamin D test.',
+      recommendations:['BPT Home Visit','Vitamin D Test','Reduce screen time'],
+      nextFollowup:'2025-04-28', createdAt:'2025-04-14T10:00:00Z' },
+  ],
 };
 
 // ---- Database Engine ----
@@ -224,7 +320,17 @@ class DormedsDB {
   }
 
   _init() {
-    if (!localStorage.getItem(DB_PREFIX + 'ready')) {
+    const isReady = localStorage.getItem(DB_PREFIX + 'ready');
+    const version = localStorage.getItem(DB_PREFIX + 'version');
+    const CURRENT_VERSION = '3.0';
+    if (!isReady || version !== CURRENT_VERSION) {
+      // Clear old data and re-seed
+      const toRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith(DB_PREFIX)) toRemove.push(k);
+      }
+      toRemove.forEach(k => localStorage.removeItem(k));
       Object.keys(SEED).forEach(k => {
         if (k !== 'ocrMap' && k !== 'searchHistory')
           localStorage.setItem(DB_PREFIX + k, JSON.stringify(SEED[k]));
@@ -232,6 +338,7 @@ class DormedsDB {
       localStorage.setItem(DB_PREFIX + 'cart', '[]');
       localStorage.setItem(DB_PREFIX + 'searchHistory', JSON.stringify(SEED.searchHistory));
       localStorage.setItem(DB_PREFIX + 'prescriptions', '[]');
+      localStorage.setItem(DB_PREFIX + 'version', CURRENT_VERSION);
       localStorage.setItem(DB_PREFIX + 'ready', '1');
     }
   }
@@ -407,11 +514,41 @@ class DormedsDB {
       'accepted': ['preparing', 'cancelled'],
       'preparing': ['packed', 'cancelled'],
       'packed': ['out_for_delivery'],
-      'out_for_delivery': ['delivered'],
+      'out_for_delivery': ['delivered', 'delivery_failed'],
+      'delivery_failed': ['out_for_delivery', 'cancelled'],
       'delivered': [],
       'cancelled': [],
     };
     return (valid[current] || []).includes(next);
+  }
+
+  // Generate 4-digit delivery OTP
+  generateOtp() {
+    return String(Math.floor(1000 + Math.random() * 9000));
+  }
+
+  // Check subscription status for a user
+  checkSubscription(userId) {
+    const subs = this.get('subscriptions');
+    const sub = subs.find(s => s.userId === userId && s.status === 'active');
+    if (!sub) return { active: false, plan: null, daysLeft: 0, expired: false, bptCredits: 0 };
+    const end = new Date(sub.endDate);
+    const now = new Date();
+    const daysLeft = Math.ceil((end - now) / (1000 * 60 * 60 * 24));
+    const expired = daysLeft <= 0;
+    if (expired) { this.update('subscriptions', sub.id, { status: 'expired' }); }
+    const plan = this.getOne('subscription_plans', sub.planId);
+    return { active: !expired, plan, sub, daysLeft: Math.max(0, daysLeft), expired, bptCredits: (sub.bptCredits || 0) - (sub.bptUsed || 0) };
+  }
+
+  // Feature access gating
+  isFeatureAllowed(userId, feature) {
+    const { active, plan } = this.checkSubscription(userId);
+    if (!active) return false;
+    const premiumFeatures = ['bpt', 'lab_priority', 'counsellor', 'health_reports'];
+    if (premiumFeatures.includes(feature)) return plan?.id === 'SP2';
+    // Basic features available to all subscribers
+    return true;
   }
 
   // Stock validation before checkout

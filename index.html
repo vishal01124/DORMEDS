@@ -2,29 +2,56 @@
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-  <meta name="description" content="DORMEDS — India's smartest medicine delivery platform with real-time tracking, prescription OCR, and multi-role dashboards." />
-  <title>DORMEDS 2.0 — Fast Medicine Delivery</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="description" content="DORMEDS — India's smartest medicine delivery platform. Order medicines, upload prescriptions, and track delivery in real-time from nearby pharmacies." />
+  <meta name="keywords" content="medicine delivery, pharmacy, prescription, India, DORMEDS" />
+  <meta name="author" content="DORMEDS" />
+  <meta name="theme-color" content="#0A0A0F" media="(prefers-color-scheme: dark)" />
+  <meta name="theme-color" content="#F8FAFF" media="(prefers-color-scheme: light)" />
 
-  <!-- Google Fonts -->
+  <!-- PWA / Mobile App -->
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="DORMEDS" />
+  <meta name="application-name" content="DORMEDS" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="DORMEDS — Fast Medicine Delivery" />
+  <meta property="og:description" content="Order medicines from nearby pharmacies with real-time tracking & prescription verification." />
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="en_IN" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="DORMEDS — Fast Medicine Delivery" />
+  <meta name="twitter:description" content="India's smartest pharmacy delivery platform." />
+
+  <title>DORMEDS — Fast Medicine Delivery</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💊</text></svg>" />
+  <link rel="apple-touch-icon" href="assets/icon.png" />
+
+  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
 
-  <!-- Leaflet.js for real-time maps -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-
-  <!-- App Styles -->
- <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
   <div id="app"></div>
+  <div id="toast-container" class="toast-container"></div>
   <div id="modal-root"></div>
-  <div id="toast-container"></div>
-
-  <!-- Data Layer -->
-  <script src="data.js"></script>
-  <!-- App Engine -->
-  <script src="app.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/subscriptions.js"></script>
+  <script src="js/services.js"></script>
+  <script src="js/admin.js"></script>
+  <script>
+    // Initialize DORMEDS 3.0
+    window.A = new DormedsApp();
+    A.adminRole = localStorage.getItem('dmed_admin_role') || null;
+    A.init();
+  </script>
 </body>
 </html>
