@@ -42,13 +42,14 @@ Object.assign(DormedsApp.prototype, {
     const adminRoleMap = {
       counsellor:{ home:()=>this.counsellorDash(), patients:()=>this.counsellorPatients(), logs:()=>this.counsellorLogs(), schedule:()=>this.counsellorSchedule(), requests:()=>this.counsellorRequests(), physio:()=>this.physioDash() },
       owner:    { home:()=>this.ownerDash(),    revenue:()=>this.ownerRevenue(),    pharmacies:()=>this.ownerPharmacies(), subscriptions:()=>this.ownerSubscriptions(), commission:()=>this.admCommission(), physio:()=>this.physioDash() },
-      support:  { home:()=>this.supportDash(),  tickets:()=>this.supportTickets(),  orders:()=>this.supportOrders(),       users:()=>this.supportUsers(), physverify:()=>this.supportPhysVerify() },
+      support:  { home:()=>this.supportDash(),  tickets:()=>this.supportDash(),  orders:()=>this.supportOrders(), users:()=>this.supportUsers(), physverify:()=>this.supportPhysVerify() },
     };
     const navMap = {
       owner:    [{id:'home',icon:'📊',l:'Dashboard'},{id:'revenue',icon:'💰',l:'Revenue'},{id:'pharmacies',icon:'🏪',l:'Pharmacies'},{id:'subscriptions',icon:'💳',l:'Subscriptions'},{id:'commission',icon:'💹',l:'Commission'},{id:'physio',icon:'🏋️',l:'Physio'}],
-      support:  [{id:'home',icon:'🎧',l:'Dashboard'},{id:'tickets',icon:'🎟️',l:'Tickets'},{id:'orders',icon:'📋',l:'Orders'},{id:'users',icon:'👥',l:'Users'},{id:'physverify',icon:'📝',l:'Phys. Verify'}],
+      support:  [{id:'home',icon:'🎧',l:'Dashboard'},{id:'tickets',icon:'🎟️',l:'All Tickets'},{id:'orders',icon:'📋',l:'Orders'},{id:'users',icon:'👥',l:'Users'},{id:'physverify',icon:'📝',l:'Phys. Verify'}],
       counsellor:[{id:'home',icon:'🩺',l:'Dashboard'},{id:'patients',icon:'👤',l:'Patients'},{id:'requests',icon:'💬',l:'Counselling Reqs'},{id:'logs',icon:'📝',l:'Logs'},{id:'schedule',icon:'📅',l:'Schedule'},{id:'physio',icon:'🏋️',l:'Physio'}],
     };
+
     const roleColors = { owner:'var(--primary)', support:'var(--warning)', counsellor:'#8B5CF6' };
     const roleLabels = { owner:'Owner Panel', support:'Customer Care', counsellor:'Counselling' };
     const viewFn = (adminRoleMap[role]?.[view] || adminRoleMap[role]?.home || (()=>''))();

@@ -1183,3 +1183,77 @@ h1,h2,h3,h4,h5,h6{line-height:1.2;font-weight:700;color:var(--text-primary)}
   .lh-coins{font-size:2.5rem}
   .slot-grid{grid-template-columns:repeat(2,1fr)}
 }
+
+/* =====================================================================
+   DORMEDS 4.0 UPGRADE — Inventory · Support · Counselling · Rx Fix
+   ===================================================================== */
+
+/* ---- Input label ---- */
+.inp-label{display:block;font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px}
+
+/* ---- Inventory ---- */
+.inv-alert{display:flex;align-items:center;gap:var(--s-3);padding:var(--s-3) var(--s-4);border-radius:var(--r-md);margin-bottom:var(--s-3);font-size:var(--text-sm);font-weight:500}
+.inv-alert-warn{background:var(--warning-bg);border:1px solid rgba(245,158,11,.25);color:var(--warning)}
+.inv-alert-err{background:var(--error-bg);border:1px solid rgba(239,68,68,.25);color:var(--error)}
+.sync-bar{display:flex;align-items:center;gap:var(--s-4);padding:var(--s-3) var(--s-4);background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--r-md);margin-bottom:var(--s-4);flex-wrap:wrap}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:var(--success);box-shadow:0 0 8px var(--success);animation:pulse 2s ease-in-out infinite}
+
+/* ---- Barcode Scanner ---- */
+.scanner-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.scanner-line{width:70%;height:2px;background:var(--primary);box-shadow:0 0 8px var(--primary);animation:scanLine 2s linear infinite}
+@keyframes scanLine{0%{transform:translateY(-60px)}50%{transform:translateY(60px)}100%{transform:translateY(-60px)}}
+.scanner-corner{position:absolute;width:20px;height:20px;border-color:var(--primary);border-style:solid}
+.scanner-corner.tl{top:20%;left:15%;border-width:3px 0 0 3px}
+.scanner-corner.tr{top:20%;right:15%;border-width:3px 3px 0 0}
+.scanner-corner.bl{bottom:20%;left:15%;border-width:0 0 3px 3px}
+.scanner-corner.br{bottom:20%;right:15%;border-width:0 3px 3px 0}
+
+/* ---- Prescription Upload ---- */
+.upload-zone{border:2px dashed var(--border);border-radius:var(--r-xl);padding:var(--s-8) var(--s-6);text-align:center;cursor:pointer;transition:all var(--t-base) var(--ease);margin-bottom:var(--s-4);background:var(--bg-surface)}
+.upload-zone:hover,.upload-zone.drag-over{border-color:var(--primary);background:var(--primary-subtle)}
+.uz-icon{font-size:48px;margin-bottom:var(--s-3)}
+.rx-card{display:flex;align-items:center;gap:var(--s-3);padding:var(--s-4);background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-lg);margin-bottom:var(--s-3);cursor:pointer;transition:all var(--t-fast) var(--ease)}
+.rx-card:hover{border-color:var(--primary);background:var(--primary-subtle)}
+.rx-thumbnail{width:48px;height:48px;border-radius:var(--r-md);background:var(--bg-surface);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+
+/* ---- Support System ---- */
+.support-option{background:var(--bg-card);border:1.5px solid var(--border);border-radius:var(--r-xl);padding:var(--s-5);text-align:center;cursor:pointer;transition:all var(--t-base) var(--ease)}
+.support-option:hover{border-color:var(--primary);transform:translateY(-3px);box-shadow:var(--shadow-lg)}
+.so-icon{width:52px;height:52px;border-radius:var(--r-md);margin:0 auto var(--s-3);display:flex;align-items:center;justify-content:center;font-size:24px}
+.so-title{font-size:var(--text-sm);font-weight:700;margin-bottom:4px}
+.so-sub{font-size:11px;color:var(--text-muted)}
+.ticket-card{background:var(--bg-card);border:1.5px solid var(--border);border-radius:var(--r-lg);padding:var(--s-4);margin-bottom:var(--s-3);cursor:pointer;transition:all var(--t-fast) var(--ease)}
+.ticket-card:hover{border-color:var(--primary);background:var(--primary-subtle)}
+.ticket-admin-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--r-lg);padding:var(--s-5);margin-bottom:var(--s-3);transition:all var(--t-fast) var(--ease)}
+.ticket-admin-card:hover{border-color:var(--primary);box-shadow:var(--shadow-md)}
+.unread-dot-wrap{display:flex;align-items:center;gap:var(--s-1);margin-top:var(--s-2)}
+
+/* ---- Chat UI ---- */
+.chat-msg{display:flex;flex-direction:column;max-width:75%}
+.chat-user{align-self:flex-end;align-items:flex-end}
+.chat-agent{align-self:flex-start;align-items:flex-start}
+.cm-bubble{padding:10px 14px;border-radius:18px;font-size:var(--text-sm);line-height:1.5;word-break:break-word}
+.chat-user .cm-bubble{background:var(--primary);color:white;border-bottom-right-radius:4px}
+.chat-agent .cm-bubble{background:var(--bg-surface);border:1px solid var(--border);color:var(--text-primary);border-bottom-left-radius:4px}
+.cm-time{font-size:10px;color:var(--text-muted);margin-top:3px;padding:0 4px}
+.quick-reply-btn{padding:6px 12px;border-radius:var(--r-full);border:1.5px solid var(--border);background:transparent;color:var(--text-secondary);font-size:11px;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.quick-reply-btn:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-subtle)}
+
+/* ---- Call Animation ---- */
+.call-animation{position:relative;width:80px;height:80px;margin:0 auto}
+.call-ring{position:absolute;inset:0;border-radius:50%;border:2px solid var(--primary);opacity:.7;animation:callRing 1.5s ease-out infinite}
+@keyframes callRing{0%{transform:scale(1);opacity:.7}100%{transform:scale(1.8);opacity:0}}
+.call-center{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:28px;background:var(--primary);border-radius:50%;z-index:1}
+.btn-success{background:linear-gradient(135deg,var(--success),#15803d);color:white}
+.btn-success:hover{background:linear-gradient(135deg,#4ADE80,var(--success))}
+
+/* ---- Counselling ---- */
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ---- Responsive 4.0 ---- */
+@media(max-width:640px){
+  .sync-bar{flex-direction:column;align-items:flex-start;gap:var(--s-1)}
+  .support-option{padding:var(--s-3)}
+  .so-icon{width:40px;height:40px;font-size:18px}
+  .chat-msg{max-width:88%}
+}

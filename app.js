@@ -200,11 +200,12 @@ class DormedsApp {
       services:()=>this.cServices(), bptbook:()=>this.cBptBook(), labbook:()=>this.cLabBook(),
       subscription:()=>this.cSubscription(), exercises:()=>this._wrapExerciseLib(),
       loyalty:()=>this.cLoyalty(), reminders:()=>this.cReminders(), health:()=>this.cHealthProfile(),
+      support:()=>this.cSupport(),
     };
     const content = (views[v] || views.home)();
     const cc = this.cart.length;
-    const isInner = ['product','checkout','tracking','bptbook','labbook','exercises','loyalty','reminders','health'].includes(v);
-    const innerTitles = {product:'Product Detail',checkout:'Checkout',tracking:'Order Tracking',bptbook:'Book BPT Session',labbook:'Book Lab Test',exercises:'Exercise Library',loyalty:'DORM Coins',reminders:'Reminders',health:'Health Profile'};
+    const isInner = ['product','checkout','tracking','bptbook','labbook','exercises','loyalty','reminders','health','support'].includes(v);
+    const innerTitles = {product:'Product Detail',checkout:'Checkout',tracking:'Order Tracking',bptbook:'Book BPT Session',labbook:'Book Lab Test',exercises:'Exercise Library',loyalty:'DORM Coins',reminders:'Reminders',health:'Health Profile',support:'Customer Support'};
     const navItems = [
       {id:'home',icon:'🏠',l:'Home'},
       {id:'search',icon:'🔍',l:'Search'},
@@ -219,6 +220,7 @@ class DormedsApp {
       {id:'loyalty',icon:'🪙',l:'DORM Coins'},
       {id:'reminders',icon:'⏰',l:'Reminders'},
       {id:'health',icon:'❤️',l:'Health'},
+      {id:'support',icon:'🎧',l:'Support'},
     ];
 
     // ---- DESKTOP: two-panel layout ----

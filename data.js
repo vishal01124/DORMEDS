@@ -500,6 +500,30 @@ const SEED = {
       time:'08:00', frequency:'daily', daysOfWeek:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
       enabled:true, note:'After breakfast', createdAt:'2025-04-12T10:00:00Z', lastNotified:null },
   ],
+
+  // ---- Support Tickets ----
+  support_tickets: [
+    { id:'TK001', userId:'U1', userName:'Rahul Sharma', userPhone:'9876543210',
+      category:'order_issue', subject:'Medicine not received yet',
+      description:'I placed order O2 but it has been 2 hours and I have not received my medicines.',
+      orderId:'O2', status:'pending', priority:'high', assignedTo:'Support Agent 1',
+      lastMessage:'Checking with pharmacy partner now.',
+      messages:[
+        { sender:'user', text:'I placed order O2 but it has been 2 hours and I have not received my medicines.', ts:'2025-04-14T11:00:00Z' },
+        { sender:'agent', text:'Checking with pharmacy partner now.', ts:'2025-04-14T11:12:00Z' },
+      ],
+      createdAt:'2025-04-14T11:00:00Z', updatedAt:'2025-04-14T11:12:00Z', unread:true },
+    { id:'TK002', userId:'U1', userName:'Rahul Sharma', userPhone:'9876543210',
+      category:'payment', subject:'Refund not received for cancelled order',
+      description:'My order O1 was cancelled. I paid via UPI. Refund not received after 5 days.',
+      orderId:'O1', status:'resolved', priority:'medium', assignedTo:'Support Agent 2',
+      lastMessage:'Refund has been processed. Will reflect in 2-3 days.',
+      messages:[
+        { sender:'user', text:'My order O1 was cancelled. Refund not received.', ts:'2025-04-10T09:00:00Z' },
+        { sender:'agent', text:'Refund has been processed. Will reflect in 2-3 days.', ts:'2025-04-10T10:30:00Z' },
+      ],
+      createdAt:'2025-04-10T09:00:00Z', updatedAt:'2025-04-10T10:30:00Z', unread:false },
+  ],
 };
 
 // ---- Database Engine ----
@@ -511,7 +535,7 @@ class DormedsDB {
   _init() {
     const isReady = localStorage.getItem(DB_PREFIX + 'ready');
     const version = localStorage.getItem(DB_PREFIX + 'version');
-    const CURRENT_VERSION = '3.2';
+    const CURRENT_VERSION = '4.0';
     if (!isReady || version !== CURRENT_VERSION) {
       // Clear old data and re-seed
       const toRemove = [];
