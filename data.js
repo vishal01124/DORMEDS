@@ -223,6 +223,132 @@ const SEED = {
 
   // ---- DORMEDS 3.0 NEW TABLES ----
 
+  // ---- Admin Users (role-based access) ----
+  admin_users: [
+    { id:'SA1', username:'superadmin', name:'Vishal Sharma (Super Admin)',
+      // password: Admin@1234  (stored as base64 of SHA-like string for demo)
+      password_b64: 'QWRtaW5AMTIzNA==',
+      role:'super_admin', active:true, email:'superadmin@dormeds.com',
+      createdAt:'2024-01-01T00:00:00Z', lastLogin:null },
+    { id:'ADM1', username:'admin1', name:'Kavya Reddy',
+      password_b64: 'YWRtaW4xMjM=',
+      role:'admin', active:true, email:'kavya@dormeds.com',
+      createdAt:'2024-03-01T00:00:00Z', lastLogin:null },
+    { id:'OPS1', username:'ops1', name:'Rajan Mehta',
+      password_b64: 'b3BzMTIz',
+      role:'ops', active:true, email:'rajan@dormeds.com',
+      createdAt:'2024-06-01T00:00:00Z', lastLogin:null },
+  ],
+
+  // ---- Delivery Checklists ----
+  delivery_checklists: [
+    { id:'DC1', orderId:'O1', deliveryPartnerId:'D1',
+      pickedConfirmed:true, sealedConfirmed:true, addressConfirmed:true,
+      counsellingRequired:false, completedAt:'2025-03-28T10:45:00Z' },
+    { id:'DC2', orderId:'O5', deliveryPartnerId:'D2',
+      pickedConfirmed:true, sealedConfirmed:true, addressConfirmed:true,
+      counsellingRequired:false, completedAt:'2025-03-20T14:15:00Z' },
+  ],
+
+  // ---- Counselling Requests (auto-created from delivery checklist) ----
+  counselling_requests: [
+    { id:'CR1', orderId:'O1', patientId:'U1', patientName:'Rahul Sharma',
+      status:'counselling_completed', notes:'Patient counselled about dosage of Dolo 650.',
+      counsellorId:'ADM-C1', counsellorName:'Dr. Prathap Rao',
+      createdAt:'2025-03-28T11:00:00Z', completedAt:'2025-03-28T11:30:00Z' },
+  ],
+
+  // ---- Physical Verification Records ----
+  physical_verifications: [
+    { id:'PV1', orderId:'O1', status:'verified',
+      verifiedBy:'Dr. Suresh Reddy', verifierRole:'pharmacy',
+      notes:'Prescription verified in person.', timestamp:'2025-03-28T11:10:00Z' },
+  ],
+
+  // ---- Delivery OTPs ----
+  delivery_otps: [
+    { orderId:'O2', otp:'4521', verified:false, generatedAt:'2025-04-14T09:30:00Z' },
+  ],
+
+  // ---- BPT Exercise Library ----
+  exercise_library: [
+    // Back Pain
+    { id:'EX1', name:'Cat-Cow Stretch', bodyPart:'Lower Back', painType:'Back Pain', difficulty:'Easy',
+      duration:'5 min', reps:'10 reps × 3 sets', icon:'🐱',
+      instructions:'Start on all fours. Arch your back upward (cat), then dip it downward (cow). Breathe deeply. Repeat slowly.' },
+    { id:'EX2', name:'McKenzie Extension', bodyPart:'Lower Back', painType:'Back Pain', difficulty:'Medium',
+      duration:'8 min', reps:'10 reps × 2 sets', icon:'🧘',
+      instructions:'Lie face down. Place hands under shoulders. Slowly push upper body up, keeping hips on floor. Hold 2 sec.' },
+    { id:'EX3', name:'Pelvic Tilt', bodyPart:'Lower Back', painType:'Back Pain', difficulty:'Easy',
+      duration:'5 min', reps:'15 reps × 3 sets', icon:'🦵',
+      instructions:'Lie on back, knees bent. Flatten lower back against floor by tightening abs. Hold 5 sec, release.' },
+    { id:'EX4', name:'Bird Dog', bodyPart:'Core & Back', painType:'Back Pain', difficulty:'Medium',
+      duration:'10 min', reps:'8 reps each side × 3 sets', icon:'🐦',
+      instructions:'On all fours, extend opposite arm and leg simultaneously. Hold 3 sec. Keep back flat.' },
+    // Knee Pain
+    { id:'EX5', name:'Quad Set', bodyPart:'Knee', painType:'Knee Pain', difficulty:'Easy',
+      duration:'5 min', reps:'15 reps × 3 sets', icon:'🦵',
+      instructions:'Sit with leg straight. Tighten quad muscle, press back of knee to floor. Hold 5 sec, release.' },
+    { id:'EX6', name:'Straight Leg Raise', bodyPart:'Knee', painType:'Knee Pain', difficulty:'Easy',
+      duration:'8 min', reps:'12 reps × 3 sets', icon:'🏋️',
+      instructions:'Lie on back. Tighten quad, lift straightened leg to 45°. Hold 2 sec, lower slowly.' },
+    { id:'EX7', name:'Wall Squat (Slide)', bodyPart:'Knee & Quad', painType:'Knee Pain', difficulty:'Hard',
+      duration:'10 min', reps:'10 reps × 3 sets', icon:'🧱',
+      instructions:'Stand against wall. Slide down until thighs are parallel. Hold 10 sec. Do not go past 90°.' },
+    { id:'EX8', name:'Step-Up Exercise', bodyPart:'Knee', painType:'Knee Pain', difficulty:'Medium',
+      duration:'10 min', reps:'10 each side × 3 sets', icon:'👣',
+      instructions:'Step up onto a low step with affected leg, bring other leg up, step back down. Controlled movement.' },
+    // Neck Pain
+    { id:'EX9', name:'Chin Tuck', bodyPart:'Neck', painType:'Neck Pain', difficulty:'Easy',
+      duration:'5 min', reps:'10 reps × 3 sets', icon:'🎯',
+      instructions:'Sit upright. Gently pull chin straight back (double-chin position). Hold 5 sec. Repeat. Great for posture.' },
+    { id:'EX10', name:'Neck Rotation', bodyPart:'Neck', painType:'Neck Pain', difficulty:'Easy',
+      duration:'5 min', reps:'10 each direction × 2 sets', icon:'🔄',
+      instructions:'Sit tall. Slowly turn head to right, hold 5 sec. Return to center, then left. Do not force rotation.' },
+    { id:'EX11', name:'Shoulder Rolls', bodyPart:'Neck & Shoulders', painType:'Neck Pain', difficulty:'Easy',
+      duration:'3 min', reps:'10 forward, 10 backward × 2 sets', icon:'🌀',
+      instructions:'Sit or stand. Roll shoulders forward in large circles, then backward. Keep movements slow and controlled.' },
+    { id:'EX12', name:'Scalene Stretch', bodyPart:'Neck', painType:'Neck Pain', difficulty:'Medium',
+      duration:'5 min', reps:'Hold 30 sec each side × 3 sets', icon:'🙆',
+      instructions:'Tilt head to one side while keeping shoulders down. Use hand on top of head for gentle overpressure. Hold.' },
+    // Shoulder Pain
+    { id:'EX13', name:'Pendulum Swing', bodyPart:'Shoulder', painType:'Shoulder Pain', difficulty:'Easy',
+      duration:'5 min', reps:'30 sec clockwise + 30 sec counter × 3 sets', icon:'🔔',
+      instructions:'Lean forward, let affected arm hang freely. Swing arm in small circles using body momentum only.' },
+    { id:'EX14', name:'Wall Slides', bodyPart:'Shoulder', painType:'Shoulder Pain', difficulty:'Medium',
+      duration:'8 min', reps:'12 reps × 3 sets', icon:'🏔️',
+      instructions:'Stand facing wall, place forearms on wall. Slide arms upward (like a Y shape). Keep core tight.' },
+    { id:'EX15', name:'External Rotation', bodyPart:'Shoulder', painType:'Shoulder Pain', difficulty:'Medium',
+      duration:'8 min', reps:'15 reps × 3 sets', icon:'💪',
+      instructions:'Elbow bent at 90°, arm tucked to side. Rotate forearm outward against resistance band. Controlled.' },
+    // Hip Pain
+    { id:'EX16', name:'Clamshell', bodyPart:'Hip', painType:'Hip Pain', difficulty:'Easy',
+      duration:'8 min', reps:'15 reps each side × 3 sets', icon:'🦀',
+      instructions:'Lie on side, knees bent. Keep feet together and rotate top knee upward like a clamshell opening.' },
+    { id:'EX17', name:'Glute Bridge', bodyPart:'Hip & Glutes', painType:'Hip Pain', difficulty:'Easy',
+      duration:'8 min', reps:'15 reps × 3 sets', icon:'🌉',
+      instructions:'Lie on back, knees bent. Push through heels to lift hips toward ceiling. Squeeze glutes at top. Hold 2 sec.' },
+    { id:'EX18', name:'Hip Flexor Stretch', bodyPart:'Hip', painType:'Hip Pain', difficulty:'Medium',
+      duration:'6 min', reps:'Hold 30 sec each side × 3 sets', icon:'🧎',
+      instructions:'Kneel on one knee (lunge position). Push hips forward gently until you feel a stretch in front of hip.' },
+    // General / Posture
+    { id:'EX19', name:'Thoracic Extension', bodyPart:'Upper Back', painType:'Posture', difficulty:'Easy',
+      duration:'5 min', reps:'10 reps × 2 sets', icon:'🪑',
+      instructions:'Sit on chair edge. Place hands behind head. Lean back gently over chair back. Open chest upward.' },
+    { id:'EX20', name:'Diaphragmatic Breathing', bodyPart:'Core', painType:'General', difficulty:'Easy',
+      duration:'5 min', reps:'10 slow breaths × 3 sets', icon:'🌬️',
+      instructions:'Lie down, one hand on chest, one on belly. Breathe so only belly rises. Inhale 4 sec, exhale 6 sec.' },
+  ],
+
+  // ---- Patient Exercise Plans ----
+  patient_exercise_plans: [
+    { id:'PEP1', patientId:'U1', patientName:'Rahul Sharma',
+      title:'Lower Back Recovery Plan', exercises:['EX1','EX2','EX3','EX4'],
+      frequency:'Daily — 20 min', notes:'Start with EX1, progress to EX2 after 1 week.',
+      createdBy:'ADM-C1', createdByName:'Dr. Prathap Rao',
+      status:'active', createdAt:'2025-04-14T10:30:00Z' },
+  ],
+
   subscription_plans: [
     { id:'SP1', name:'Basic', price:199, period:'monthly', color:'#3B82F6',
       benefits:['Free delivery on all orders','10% off all medicines','Priority order processing','Smart refill reminders'],
@@ -311,6 +437,69 @@ const SEED = {
       recommendations:['BPT Home Visit','Vitamin D Test','Reduce screen time'],
       nextFollowup:'2025-04-28', createdAt:'2025-04-14T10:00:00Z' },
   ],
+
+  // ---- Drug Interactions (pairs that interact) ----
+  drug_interactions: [
+    { id:'DI1', drug1:'M1', drug2:'M5', drug1Name:'Dolo 650', drug2Name:'Voveran SR 100',
+      severity:'moderate', message:'Combining Paracetamol with Diclofenac increases risk of GI bleeding. Use with caution.' },
+    { id:'DI2', drug1:'M2', drug2:'M5', drug1Name:'Combiflam', drug2Name:'Voveran SR 100',
+      severity:'major', message:'Two NSAIDs together (Ibuprofen + Diclofenac) greatly increases bleeding risk. Avoid this combination.' },
+    { id:'DI3', drug1:'M6', drug2:'M7', drug1Name:'Glycomet 500', drug2Name:'Amaryl 2mg',
+      severity:'moderate', message:'Combined diabetes drugs may cause hypoglycemia. Monitor blood sugar closely.' },
+    { id:'DI4', drug1:'M15', drug2:'M18', drug1Name:'Cetirizine 10mg', drug2Name:'Avil 25mg',
+      severity:'major', message:'Two antihistamines together cause excessive sedation and anticholinergic effects. Do not combine.' },
+    { id:'DI5', drug1:'M16', drug2:'M17', drug1Name:'Allegra 120mg', drug2Name:'Montair LC',
+      severity:'moderate', message:'These antiallergics overlap in mechanism. Using both may not add benefit and increases side effects.' },
+    { id:'DI6', drug1:'M2', drug2:'M28', drug1Name:'Combiflam', drug2Name:'Volini Spray',
+      severity:'minor', message:'Using oral and topical NSAIDs simultaneously may increase systemic NSAID absorption. Advisable to consult doctor.' },
+    { id:'DI7', drug1:'M1', drug2:'M3', drug1Name:'Dolo 650', drug2Name:'Crocin Advance',
+      severity:'major', message:'Both are Paracetamol — taking together causes Paracetamol overdose. Use only ONE at a time.' },
+  ],
+
+  // ---- Loyalty Ledger ----
+  loyalty_ledger: [
+    { id:'LL1', userId:'U1', type:'earn', amount:100, desc:'Order O1 — ₹100 spent', ts:'2025-03-28T11:15:00Z' },
+    { id:'LL2', userId:'U1', type:'earn', amount:196, desc:'Order O2 — ₹196 spent', ts:'2025-04-14T09:30:00Z' },
+    { id:'LL3', userId:'U1', type:'earn', amount:70,  desc:'Order O5 — ₹70 spent',  ts:'2025-03-20T15:30:00Z' },
+  ],
+
+  // ---- Health Records (patient vitals) ----
+  health_records: [
+    { id:'HR1', userId:'U1', type:'blood_pressure', systolic:122, diastolic:80, unit:'mmHg',
+      recorded:'2025-04-14', note:'Morning reading, post-exercise', ts:'2025-04-14T07:30:00Z' },
+    { id:'HR2', userId:'U1', type:'blood_sugar', value:95, unit:'mg/dL',
+      recorded:'2025-04-13', note:'Fasting blood sugar', ts:'2025-04-13T07:00:00Z' },
+    { id:'HR3', userId:'U1', type:'blood_pressure', systolic:118, diastolic:78, unit:'mmHg',
+      recorded:'2025-04-12', note:'Evening reading', ts:'2025-04-12T19:00:00Z' },
+    { id:'HR4', userId:'U1', type:'weight', value:72, unit:'kg',
+      recorded:'2025-04-10', note:'', ts:'2025-04-10T08:00:00Z' },
+  ],
+
+  // ---- Notifications ----
+  notifications: [
+    { id:'N1', userId:'U1', type:'order', icon:'📦', title:'Order Confirmed',
+      body:'Your order O1 has been confirmed and is being prepared.', read:true,
+      link:'#/customer/tracking/O1', ts:'2025-03-28T10:31:00Z' },
+    { id:'N2', userId:'U1', type:'order', icon:'🏍️', title:'Out for Delivery',
+      body:'Your order O2 is on the way! Ravi Kumar is delivering.', read:false,
+      link:'#/customer/tracking/O2', ts:'2025-04-14T09:31:00Z' },
+    { id:'N3', userId:'U1', type:'subscription', icon:'💳', title:'Subscription Active',
+      body:'Your Premium plan is active. Enjoy free BPT sessions and priority labs!', read:false,
+      link:'#/customer/subscription', ts:'2025-04-01T10:00:00Z' },
+    { id:'N4', userId:'U1', type:'health', icon:'💊', title:'Medicine Reminder',
+      body:'Time to take your Becosules Z (B-Complex). Stay healthy!', read:false,
+      link:'#/customer/orders', ts:'2025-04-14T08:00:00Z' },
+    { id:'N5', userId:'U1', type:'offer', icon:'🎁', title:'You Earned 366 DORM Coins!',
+      body:'Your purchases earned loyalty coins. Redeem ₹36 off your next order.', read:false,
+      link:'#/customer/profile', ts:'2025-04-14T09:32:00Z' },
+  ],
+
+  // ---- Medicine Reminder Schedules ----
+  reminder_schedules: [
+    { id:'RS1', userId:'U1', medId:'M10', medName:'Becosules Z', medIcon:'💪',
+      time:'08:00', frequency:'daily', daysOfWeek:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+      enabled:true, note:'After breakfast', createdAt:'2025-04-12T10:00:00Z', lastNotified:null },
+  ],
 };
 
 // ---- Database Engine ----
@@ -322,7 +511,7 @@ class DormedsDB {
   _init() {
     const isReady = localStorage.getItem(DB_PREFIX + 'ready');
     const version = localStorage.getItem(DB_PREFIX + 'version');
-    const CURRENT_VERSION = '3.0';
+    const CURRENT_VERSION = '3.2';
     if (!isReady || version !== CURRENT_VERSION) {
       // Clear old data and re-seed
       const toRemove = [];
@@ -514,12 +703,29 @@ class DormedsDB {
       'accepted': ['preparing', 'cancelled'],
       'preparing': ['packed', 'cancelled'],
       'packed': ['out_for_delivery'],
-      'out_for_delivery': ['delivered', 'delivery_failed'],
+      'out_for_delivery': ['pending_physical_verification', 'delivery_failed'],
+      'pending_physical_verification': ['completed', 'out_for_delivery'],
       'delivery_failed': ['out_for_delivery', 'cancelled'],
+      'completed': [],
       'delivered': [],
       'cancelled': [],
     };
     return (valid[current] || []).includes(next);
+  }
+
+  // Admin user auth helpers
+  verifyAdminPassword(username, password) {
+    const users = this.get('admin_users');
+    const user = users.find(u => u.username === username && u.active);
+    if (!user) return null;
+    // Demo: compare base64 encoded password
+    const encoded = btoa(password);
+    if (encoded === user.password_b64) return user;
+    return null;
+  }
+
+  getAdminUser(username) {
+    return this.get('admin_users').find(u => u.username === username) || null;
   }
 
   // Generate 4-digit delivery OTP
@@ -585,6 +791,89 @@ class DormedsDB {
     return partners[0] || null;
   }
 
+  // Check drug interactions for a list of medicine IDs
+  checkInteractions(medIds) {
+    const interactions = this.get('drug_interactions');
+    const found = [];
+    for (let i = 0; i < medIds.length; i++) {
+      for (let j = i + 1; j < medIds.length; j++) {
+        const a = medIds[i], b = medIds[j];
+        const ix = interactions.find(d =>
+          (d.drug1 === a && d.drug2 === b) || (d.drug1 === b && d.drug2 === a)
+        );
+        if (ix) found.push(ix);
+      }
+    }
+    return found;
+  }
+
+  // Get loyalty coin balance for a user
+  getLoyaltyBalance(userId) {
+    const ledger = this.get('loyalty_ledger').filter(l => l.userId === userId);
+    return ledger.reduce((s, l) => l.type === 'earn' ? s + l.amount : s - l.amount, 0);
+  }
+
+  // Award loyalty coins for an order
+  awardLoyaltyCoins(userId, amount, desc) {
+    const coins = Math.floor(amount); // 1 coin per ₹1
+    if (coins <= 0) return 0;
+    this.add('loyalty_ledger', {
+      id: 'LL' + Date.now(), userId, type: 'earn', amount: coins, desc, ts: new Date().toISOString()
+    });
+    return coins;
+  }
+
+  // Redeem loyalty coins (100 coins = ₹10 off)
+  redeemCoins(userId, coins) {
+    const balance = this.getLoyaltyBalance(userId);
+    if (balance < coins) return false;
+    this.add('loyalty_ledger', {
+      id: 'LL' + Date.now(), userId, type: 'redeem', amount: coins,
+      desc: `Redeemed ${coins} coins for ₹${Math.floor(coins/10)} discount`, ts: new Date().toISOString()
+    });
+    return true;
+  }
+
+  // Add a notification for a user
+  addNotification(userId, { type, icon, title, body, link }) {
+    this.add('notifications', {
+      id: 'N' + Date.now(), userId, type, icon, title, body,
+      read: false, link: link || '#/', ts: new Date().toISOString()
+    });
+  }
+
+  // Count unread notifications for a user
+  unreadCount(userId) {
+    return this.get('notifications').filter(n => n.userId === userId && !n.read).length;
+  }
+
+  // Mark all notifications as read
+  markAllRead(userId) {
+    const notifs = this.get('notifications');
+    notifs.forEach(n => { if (n.userId === userId) n.read = true; });
+    this.set('notifications', notifs);
+  }
+
+  // Check overdue medicine reminders
+  checkReminders(userId) {
+    const reminders = this.get('reminder_schedules').filter(r => r.userId === userId && r.enabled);
+    const now = new Date();
+    const currentTime = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    const today = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][now.getDay()];
+    const overdue = [];
+    reminders.forEach(r => {
+      if (!r.daysOfWeek.includes(today)) return;
+      if (r.time <= currentTime) {
+        const lastKey = `dmed_rem_${r.id}_${now.toDateString()}`;
+        if (!localStorage.getItem(lastKey)) {
+          localStorage.setItem(lastKey, '1');
+          overdue.push(r);
+        }
+      }
+    });
+    return overdue;
+  }
+
   reset() {
     Object.keys(localStorage).forEach(k => { if (k.startsWith(DB_PREFIX)) localStorage.removeItem(k); });
     this._init();
@@ -600,3 +889,4 @@ class DormedsDB {
     toRemove.forEach(k => localStorage.removeItem(k));
   }
 }
+

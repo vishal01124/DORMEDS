@@ -40,14 +40,14 @@ Object.assign(DormedsApp.prototype, {
   // ===== ADMIN ROUTER (extend main route) =====
   routeAdmin(app, role, view, param) {
     const adminRoleMap = {
-      owner:    { home:()=>this.ownerDash(),    revenue:()=>this.ownerRevenue(),    pharmacies:()=>this.ownerPharmacies(), subscriptions:()=>this.ownerSubscriptions(), commission:()=>this.admCommission() },
-      support:  { home:()=>this.supportDash(),  tickets:()=>this.supportTickets(),  orders:()=>this.supportOrders(),       users:()=>this.supportUsers() },
-      counsellor:{ home:()=>this.counsellorDash(), patients:()=>this.counsellorPatients(), logs:()=>this.counsellorLogs(), schedule:()=>this.counsellorSchedule() },
+      counsellor:{ home:()=>this.counsellorDash(), patients:()=>this.counsellorPatients(), logs:()=>this.counsellorLogs(), schedule:()=>this.counsellorSchedule(), requests:()=>this.counsellorRequests(), physio:()=>this.physioDash() },
+      owner:    { home:()=>this.ownerDash(),    revenue:()=>this.ownerRevenue(),    pharmacies:()=>this.ownerPharmacies(), subscriptions:()=>this.ownerSubscriptions(), commission:()=>this.admCommission(), physio:()=>this.physioDash() },
+      support:  { home:()=>this.supportDash(),  tickets:()=>this.supportTickets(),  orders:()=>this.supportOrders(),       users:()=>this.supportUsers(), physverify:()=>this.supportPhysVerify() },
     };
     const navMap = {
-      owner:    [{id:'home',icon:'📊',l:'Dashboard'},{id:'revenue',icon:'💰',l:'Revenue'},{id:'pharmacies',icon:'🏪',l:'Pharmacies'},{id:'subscriptions',icon:'💳',l:'Subscriptions'},{id:'commission',icon:'💹',l:'Commission'}],
-      support:  [{id:'home',icon:'🎧',l:'Dashboard'},{id:'tickets',icon:'🎟️',l:'Tickets'},{id:'orders',icon:'📋',l:'Orders'},{id:'users',icon:'👥',l:'Users'}],
-      counsellor:[{id:'home',icon:'🩺',l:'Dashboard'},{id:'patients',icon:'👤',l:'Patients'},{id:'logs',icon:'📝',l:'Logs'},{id:'schedule',icon:'📅',l:'Schedule'}],
+      owner:    [{id:'home',icon:'📊',l:'Dashboard'},{id:'revenue',icon:'💰',l:'Revenue'},{id:'pharmacies',icon:'🏪',l:'Pharmacies'},{id:'subscriptions',icon:'💳',l:'Subscriptions'},{id:'commission',icon:'💹',l:'Commission'},{id:'physio',icon:'🏋️',l:'Physio'}],
+      support:  [{id:'home',icon:'🎧',l:'Dashboard'},{id:'tickets',icon:'🎟️',l:'Tickets'},{id:'orders',icon:'📋',l:'Orders'},{id:'users',icon:'👥',l:'Users'},{id:'physverify',icon:'📝',l:'Phys. Verify'}],
+      counsellor:[{id:'home',icon:'🩺',l:'Dashboard'},{id:'patients',icon:'👤',l:'Patients'},{id:'requests',icon:'💬',l:'Counselling Reqs'},{id:'logs',icon:'📝',l:'Logs'},{id:'schedule',icon:'📅',l:'Schedule'},{id:'physio',icon:'🏋️',l:'Physio'}],
     };
     const roleColors = { owner:'var(--primary)', support:'var(--warning)', counsellor:'#8B5CF6' };
     const roleLabels = { owner:'Owner Panel', support:'Customer Care', counsellor:'Counselling' };
@@ -435,6 +435,146 @@ Object.assign(DormedsApp.prototype, {
           <button class="btn btn-p btn-sm" onclick="A.showAddLog('${l.patientId}')">+ Note</button>
         </div>
       </div>`).join('')}`;
+  },
+
+  // ---- Counselling Requests (auto-created from delivery) ----
+  counsellorRequests() {
+    const requests = this.db.get('counselling_requests');
+    const pending = requests.filter(r => r.status === 'counselling_pending');
+    const done = requests.filter(r => r.status === 'counselling_completed');
+    return `
+    <div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--s-6)">
+        <div>
+          <h2 style="font-size:var(--text-xl)">🩺 Counselling Requests</h2>
+          <p style="font-size:var(--text-sm);color:var(--text-secondary);margin-top:4px">Auto-created from delivery checklist</p>
+        </div>
+        <div style="display:flex;gap:var(--s-3);align-items:center">
+          <span class="badge badge-w">${pending.length} Pending</span>
+          <span class="badge badge-s">${done.length} Done</span>
+        </div>
+      </div>
+
+      ${requests.length === 0 ? `
+        <div style="text-align:center;padding:var(--s-16)">
+          <div style="font-size:64px;margin-bottom:var(--s-4)">🩺</div>
+          <h3>No counselling requests yet</h3>
+          <p style="color:var(--text-secondary);margin-top:var(--s-2)">Requests auto-appear when delivery partner marks 'Need Counselling = YES'</p>
+        </div>` : ''}
+
+      ${pending.length > 0 ? `<h3 style="font-size:var(--text-base);margin-bottom:var(--s-4);color:var(--warning)">⏳ Pending (${pending.length})</h3>` : ''}
+      ${pending.map(r => `
+      <div class="counselling-req-card">
+        <div class="crc-head">
+          <div>
+            <div class="crc-patient">👤 ${r.patientName}</div>
+            <div class="crc-order">Order #${r.orderId} · ${new Date(r.createdAt).toLocaleString('en-IN')}</div>
+          </div>
+          <span class="badge-counselling">Pending</span>
+        </div>
+        <div style="margin-bottom:var(--s-3)">
+          <label style="font-size:11px;font-weight:600;color:var(--text-muted);display:block;margin-bottom:4px">COUNSELLING NOTES</label>
+          <textarea class="inp" id="cr-notes-${r.id}" rows="2" placeholder="Add notes about counselling session..."></textarea>
+        </div>
+        <div style="display:flex;gap:var(--s-3)">
+          <button class="btn btn-p btn-sm" onclick="A.markCounsellingDone('${r.id}')">✅ Mark Counselling Done</button>
+          <button class="btn btn-g btn-sm" onclick="A.toast('Scheduling follow-up call...','info')">📞 Schedule Call</button>
+        </div>
+      </div>`).join('')}
+
+      ${done.length > 0 ? `<h3 style="font-size:var(--text-base);margin:var(--s-6) 0 var(--s-4);color:var(--success)">✅ Completed (${done.length})</h3>` : ''}
+      ${done.map(r => `
+      <div class="counselling-req-card" style="border-color:rgba(34,197,94,.2);opacity:.8">
+        <div class="crc-head">
+          <div>
+            <div class="crc-patient">👤 ${r.patientName}</div>
+            <div class="crc-order">Order #${r.orderId}</div>
+          </div>
+          <span class="badge-counselling badge-counselling-done">✅ Done</span>
+        </div>
+        ${r.notes ? `<div style="font-size:var(--text-sm);color:var(--text-secondary)">${r.notes}</div>` : ''}
+        ${r.completedAt ? `<div style="font-size:11px;color:var(--text-muted);margin-top:var(--s-2)">Completed: ${new Date(r.completedAt).toLocaleString('en-IN')}</div>` : ''}
+      </div>`).join('')}
+    </div>`;
+  },
+
+  markCounsellingDone(reqId) {
+    const notes = document.getElementById(`cr-notes-${reqId}`)?.value?.trim();
+    this.db.update('counselling_requests', reqId, {
+      status: 'counselling_completed', notes: notes || 'Counselled successfully.',
+      counsellorId: 'ADM-C1', counsellorName: 'Dr. Prathap Rao',
+      completedAt: new Date().toISOString()
+    });
+    this.toast('Counselling session marked as done ✅');
+    this.route();
+  },
+
+  // ---- Physical Verification (Support Panel) ----
+  supportPhysVerify() {
+    const pendingOrders = this.db.get('orders').filter(o => o.status === 'pending_physical_verification');
+    const verifications = this.db.get('physical_verifications');
+
+    return `
+    <div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--s-6)">
+        <div>
+          <h2 style="font-size:var(--text-xl)">📝 Physical Prescription Verification</h2>
+          <p style="font-size:var(--text-sm);color:var(--text-secondary);margin-top:4px">Orders awaiting in-person prescription check</p>
+        </div>
+        <span class="badge badge-w">${pendingOrders.length} Pending</span>
+      </div>
+
+      ${pendingOrders.length === 0 ? `
+      <div style="text-align:center;padding:var(--s-16)">
+        <div style="font-size:64px;margin-bottom:var(--s-4)">✅</div>
+        <h3>All orders verified</h3>
+        <p style="color:var(--text-secondary);margin-top:var(--s-2)">No orders pending physical prescription verification</p>
+      </div>` : ''}
+
+      ${pendingOrders.map(o => `
+      <div class="phys-verify-banner" style="display:flex;flex-direction:column;gap:var(--s-3);">
+        <div style="display:flex;align-items:flex-start;gap:var(--s-4)">
+          <span class="pvb-icon">📝</span>
+          <div class="pvb-text" style="flex:1">
+            <h4>Order #${o.id} — ${o.uName}</h4>
+            <p>OTP Verified ✅ · ${o.items.length} items · ₹${o.total} · ${o.payMethod}</p>
+            <p style="margin-top:4px">📍 ${o.address}</p>
+          </div>
+        </div>
+        <div style="display:flex;gap:var(--s-3)">
+          <textarea class="inp" id="pv-notes-${o.id}" rows="2" placeholder="Verification notes (e.g. Prescription seen, ID confirmed)..."></textarea>
+        </div>
+        <button class="btn btn-success btn-sm" onclick="A.completePhysVerification('${o.id}')">
+          ✅ Mark Physical Verification Complete → Mark Order Delivered
+        </button>
+      </div>`).join('')}
+
+      ${verifications.length > 0 ? `
+      <h3 style="font-size:var(--text-base);margin:var(--s-6) 0 var(--s-4)">✅ Verified Orders</h3>
+      ${verifications.map(v => `
+      <div class="phys-verify-banner phys-verify-banner-complete">
+        <span class="pvb-icon">✅</span>
+        <div class="pvb-text"><h4>Order #${v.orderId}</h4><p>Verified by ${v.verifiedBy} · ${new Date(v.timestamp).toLocaleString('en-IN')}</p></div>
+      </div>`).join('')}` : ''}
+    </div>`;
+  },
+
+  completePhysVerification(orderId) {
+    const notes = document.getElementById(`pv-notes-${orderId}`)?.value?.trim();
+    // Save verification record
+    this.db.add('physical_verifications', {
+      id: 'PV' + Date.now(), orderId,
+      status: 'verified', verifiedBy: 'Support Agent',
+      verifierRole: 'support', notes: notes || 'Physical verification completed.',
+      timestamp: new Date().toISOString()
+    });
+    // Move order to completed
+    this.db.update('orders', orderId, {
+      status: 'completed',
+      updatedAt: new Date().toISOString()
+    });
+    this.toast('✅ Physical verification done! Order marked Completed.');
+    this.route();
   },
 
 }); // end admin mixin

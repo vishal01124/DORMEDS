@@ -18,6 +18,8 @@ class DormedsApp {
     window.addEventListener('hashchange', () => this.route());
     window.addEventListener('resize', () => this._onResize());
     this.showSplash();
+    // Boot extras after splash
+    setTimeout(() => this._bootExtras && this._bootExtras(), 2500);
   }
 
   _onResize() {
@@ -67,6 +69,14 @@ class DormedsApp {
   route() {
     const hash = location.hash || '#/';
     const app = document.getElementById('app');
+
+    // Super Admin route — completely separate
+    if (hash.startsWith('#/super-admin')) {
+      const [,, view] = hash.split('/');
+      this.routeSuperAdmin(app, view || 'dashboard');
+      return;
+    }
+
     if (hash === '#/' || hash === '') {
       if (this.user) { location.hash = `#/${this.role}/home`; return; }
       this.viewLanding(app); return;
@@ -188,12 +198,13 @@ class DormedsApp {
       cart:()=>this.cCart(), checkout:()=>this.cCheckout(), prescription:()=>this.cPrescription(),
       tracking:()=>this.cTracking(p), orders:()=>this.cOrders(), profile:()=>this.cProfile(),
       services:()=>this.cServices(), bptbook:()=>this.cBptBook(), labbook:()=>this.cLabBook(),
-      subscription:()=>this.cSubscription(),
+      subscription:()=>this.cSubscription(), exercises:()=>this._wrapExerciseLib(),
+      loyalty:()=>this.cLoyalty(), reminders:()=>this.cReminders(), health:()=>this.cHealthProfile(),
     };
     const content = (views[v] || views.home)();
     const cc = this.cart.length;
-    const isInner = ['product','checkout','tracking','bptbook','labbook'].includes(v);
-    const innerTitles = {product:'Product Detail',checkout:'Checkout',tracking:'Order Tracking',bptbook:'Book BPT Session',labbook:'Book Lab Test'};
+    const isInner = ['product','checkout','tracking','bptbook','labbook','exercises','loyalty','reminders','health'].includes(v);
+    const innerTitles = {product:'Product Detail',checkout:'Checkout',tracking:'Order Tracking',bptbook:'Book BPT Session',labbook:'Book Lab Test',exercises:'Exercise Library',loyalty:'DORM Coins',reminders:'Reminders',health:'Health Profile'};
     const navItems = [
       {id:'home',icon:'🏠',l:'Home'},
       {id:'search',icon:'🔍',l:'Search'},
@@ -204,6 +215,10 @@ class DormedsApp {
     const desktopExtra = [
       {id:'prescription',icon:'📋',l:'Rx Upload'},
       {id:'subscription',icon:'💳',l:'Subscription'},
+      {id:'exercises',icon:'🏋️',l:'Exercises'},
+      {id:'loyalty',icon:'🪙',l:'DORM Coins'},
+      {id:'reminders',icon:'⏰',l:'Reminders'},
+      {id:'health',icon:'❤️',l:'Health'},
     ];
 
     // ---- DESKTOP: two-panel layout ----
@@ -240,7 +255,7 @@ class DormedsApp {
                     <span style="font-weight:700;font-size:var(--text-base);color:var(--text-secondary)">${[...navItems,...desktopExtra].find(i=>i.id===v)?.l||'Home'}</span>
                   </div>
                   <div style="display:flex;gap:var(--s-2)">
-                    <button class="hdr-btn" style="position:relative" onclick="A.toast('Notifications coming soon','info')">🔔<span class="dot-badge">3</span></button>
+                    <button class="hdr-btn" style="position:relative" onclick="A.showNotificationPanel()" id="notif-btn-desk">🔔<span class="dot-badge notif-badge-live" style="display:${this.db.unreadCount('U1')>0?'flex':'none'}">${this.db.unreadCount('U1')}</span></button>
                     <button class="hdr-btn" onclick="location.hash='#/customer/cart'" style="position:relative">🛒${cc>0?`<span class="dot-badge">${cc}</span>`:''}</button>
                   </div>
                 </div>`}
@@ -260,7 +275,7 @@ class DormedsApp {
             <span style="font-weight:900;font-size:var(--text-base)">DORMEDS</span>
           </div>
           <div style="display:flex;gap:var(--s-2)">
-            <button class="hdr-btn" style="position:relative" onclick="A.toast('Notifications coming soon','info')">🔔<span class="dot-badge">3</span></button>
+            <button class="hdr-btn" style="position:relative" onclick="A.showNotificationPanel()" id="notif-btn-mob">🔔<span class="dot-badge notif-badge-live" style="display:${this.db.unreadCount('U1')>0?'flex':'none'}">${this.db.unreadCount('U1')}</span></button>
             <button class="hdr-btn" onclick="location.hash='#/customer/cart'" style="position:relative">🛒${cc>0?`<span class="dot-badge">${cc}</span>`:''}</button>
           </div>
         </div>`}
@@ -430,6 +445,8 @@ class DormedsApp {
     else this.cart.push({mid:id,name:m.name,price:m.price,mrp:m.mrp,icon:m.icon,qty:1,rx:m.rx});
     this.db.set('cart', this.cart);
     this.toast(`${m.name} added to cart`);
+    // Check drug interactions
+    if (this.cart.length >= 2) this.checkCartInteractions && setTimeout(() => this.checkCartInteractions(), 400);
     this.route();
   }
 
@@ -451,6 +468,27 @@ class DormedsApp {
     const del = sub >= 300 ? 0 : 25;
     const saved = this.cart.reduce((s,c)=>(c.mrp-c.price)*c.qty+s,0);
     const needsRx = this.cart.some(c=>c.rx);
+    const coinDisc = parseInt(localStorage.getItem('dmed_coin_discount') || '0');
+    // Drug interaction check
+    const medIds = this.cart.map(c => c.mid);
+    const interactions = this.db.checkInteractions(medIds);
+    const intHtml = interactions.length > 0 ? `
+    <div style="margin-bottom:var(--s-4)">
+      <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:var(--s-2)">⚠️ Drug Interaction Alerts</div>
+      ${interactions.map(ix => {
+        const sev = ix.severity;
+        const color = sev==='major'?'var(--error)':sev==='moderate'?'var(--warning)':'var(--info)';
+        const icon = sev==='major'?'🔴':sev==='moderate'?'🟡':'🔵';
+        return `<div class="drug-interaction-banner ${sev}">
+          <div class="dib-icon">${icon}</div>
+          <div class="dib-content">
+            <h5 style="color:${color}">${ix.drug1Name} + ${ix.drug2Name} — ${sev.toUpperCase()}</h5>
+            <p>${ix.message}</p>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>` : '';
+
     return `<div style="padding:var(--s-4)">
       <h3 style="margin-bottom:var(--s-4)">🛒 Cart (${this.cart.length} items)</h3>
       ${needsRx?`<div class="card card-i" style="padding:var(--s-4);margin-bottom:var(--s-4);display:flex;align-items:center;gap:var(--s-3);border-color:var(--primary)" onclick="location.hash='#/customer/prescription'">
@@ -458,13 +496,20 @@ class DormedsApp {
         <div style="flex:1"><div style="font-weight:600;font-size:var(--text-sm);color:var(--primary)">Prescription Required</div><div style="font-size:11px;color:var(--text-muted)">Upload for Rx items in cart</div></div>
         <span style="color:var(--primary);font-weight:600">Upload →</span>
       </div>`:''}
+      ${intHtml}
       ${this.cart.map(c=>`<div class="cart-item"><div class="ci-img">${c.icon}</div><div class="ci-info"><div class="ci-name">${c.name}</div><div class="ci-sub">${c.rx?'📋 Rx Required':'💊 OTC'}</div><div class="ci-bot"><span class="ci-price">₹${c.price*c.qty}</span><div style="display:flex;align-items:center;gap:var(--s-3)"><div class="qty"><button onclick="A.updQty('${c.mid}',-1)">−</button><span class="qty-v">${c.qty}</span><button onclick="A.updQty('${c.mid}',1)">+</button></div><button onclick="A.rmCart('${c.mid}')" style="color:var(--error);font-size:18px;padding:4px">🗑</button></div></div></div></div>`).join('')}
       <div style="display:flex;gap:var(--s-2);margin:var(--s-4) 0"><input class="inp" placeholder="Promo code" id="promoInp" style="flex:1;min-height:44px"/><button class="btn btn-s btn-sm" onclick="A.applyPromo()">Apply</button></div>
+      ${coinDisc > 0 ? `<div style="display:flex;align-items:center;gap:var(--s-3);padding:var(--s-3) var(--s-4);background:rgba(252,211,77,.08);border:1.5px solid rgba(252,211,77,.25);border-radius:var(--r-md);margin-bottom:var(--s-3)">
+        <span style="font-size:20px">🪙</span>
+        <div style="flex:1;font-size:var(--text-sm)"><strong style="color:#FCD34D">₹${coinDisc} DORM Coin Discount Active</strong><div style="font-size:11px;color:var(--text-muted)">Applied automatically at checkout</div></div>
+        <button class="btn btn-g btn-sm" onclick="localStorage.removeItem('dmed_coin_discount');A.route();A.toast('Coin discount removed','info')">Remove</button>
+      </div>` : ''}
       <div class="cart-sum">
         <div class="sum-r"><span>Subtotal</span><span>₹${sub}</span></div>
         <div class="sum-r"><span>Delivery</span><span>${del===0?'<span style="color:var(--success)">FREE</span>':'₹'+del}</span></div>
         ${saved>0?`<div class="sum-r"><span>You Save</span><span style="color:var(--success);font-weight:600">−₹${saved}</span></div>`:''}
-        <div class="sum-r total"><span>Total</span><span>₹${sub+del}</span></div>
+        ${coinDisc>0?`<div class="sum-r"><span>🪙 Coin Discount</span><span style="color:#FCD34D;font-weight:600">−₹${coinDisc}</span></div>`:''}
+        <div class="sum-r total"><span>Total</span><span>₹${Math.max(0, sub + del - coinDisc)}</span></div>
       </div>
       <button class="btn btn-p btn-block btn-lg" onclick="A.validateAndCheckout()">Proceed to Checkout →</button>
     </div>`;
@@ -548,6 +593,15 @@ class DormedsApp {
     };
     this.db.add('orders', order);
     this.cart = []; this.db.set('cart', this.cart);
+    // Award loyalty coins
+    const earned = this.db.awardLoyaltyCoins('U1', order.total, `Order ${oid} — ₹${order.total} spent`);
+    if (earned > 0) {
+      this.db.addNotification('U1', { type:'offer', icon:'🪙', title:`+${earned} DORM Coins Earned!`, body:`You earned ${earned} coins for this order. Redeem for discounts.`, link:'#/customer/loyalty' });
+    }
+    // Apply coin discount if active
+    const coinDisc = parseInt(localStorage.getItem('dmed_coin_discount') || '0');
+    if (coinDisc > 0) { localStorage.removeItem('dmed_coin_discount'); this.toast(`₹${coinDisc} coin discount applied! ✅`); }
+    this.db.addNotification('U1', { type:'order', icon:'📦', title:'Order Placed!', body:`Order #${oid} placed. Total: ₹${order.total}.`, link:`#/customer/tracking/${oid}` });
     this.showSuccess(oid);
   }
 
@@ -632,12 +686,26 @@ class DormedsApp {
   cTracking(oid) {
     const o = this.db.getOne('orders', oid || 'O2');
     if (!o) return `<div style="text-align:center;padding:var(--s-16)"><h3>Order not found</h3><button class="btn btn-p" onclick="history.back()">Go Back</button></div>`;
-    const states = ['pending','accepted','preparing','packed','out_for_delivery','delivered'];
-    const labels = ['Placed','Accepted','Preparing','Packed','On the Way','Delivered'];
-    const icons  = ['📋','✅','⚙️','📦','🏍️','🎉'];
-    const ci = states.indexOf(o.status); const pct = ci >= 0 ? (ci / (states.length - 1)) * 100 : 0;
+    // Auto-mark notifications as read for this order
+    const notifs = this.db.get('notifications');
+    let changed = false;
+    notifs.forEach(n => { if (n.link && n.link.includes(o.id) && !n.read) { n.read = true; changed = true; } });
+    if (changed) this.db.set('notifications', notifs);
+    const states = ['pending','accepted','preparing','packed','out_for_delivery','pending_physical_verification','completed'];
+    const labels = ['Placed','Accepted','Preparing','Packed','On the Way','Verification','Completed'];
+    const icons  = ['📋','✅','⚙️','📦','🏍️','📝','🎉'];
+    // Support old 'delivered' status too
+    let ci = states.indexOf(o.status);
+    if (ci === -1 && o.status === 'delivered') ci = 6; // map delivered → completed slot
+    const pct = ci >= 0 ? (ci / (states.length - 1)) * 100 : 0;
+
+    const ppvBanner = (o.status === 'pending_physical_verification')
+      ? `<div class="ppv-banner"><span class="ppv-icon">📝</span><div><h4>Awaiting Physical Verification</h4><p>Your prescription is being verified in person by the pharmacy. Delivery will complete once verified.</p></div></div>`
+      : '';
+
     return `<div class="trk">
-      <div class="trk-head"><div class="trk-oid">Order #${o.id}</div><div class="trk-eta"><span>⏱️</span><span>${o.status==='delivered'?'Delivered':'~25 min'}</span></div><div class="trk-status">${labels[ci]||'Processing'}</div></div>
+      <div class="trk-head"><div class="trk-oid">Order #${o.id}</div><div class="trk-eta"><span>⏱️</span><span>${o.status==='completed'||o.status==='delivered'?'Completed':'~25 min'}</span></div><div class="trk-status">${labels[ci]||'Processing'}</div></div>
+      ${ppvBanner}
       <div class="trk-steps"><div class="trk-line" style="width:${pct}%"></div>
         ${states.map((s,i)=>`<div class="trk-step ${i<ci?'done':''} ${i===ci?'now':''}"><div class="ts-dot">${i<=ci?icons[i]:''}</div><span class="ts-lbl">${labels[i]}</span></div>`).join('')}
       </div>
@@ -653,8 +721,9 @@ class DormedsApp {
         <div style="margin-top:var(--s-2);font-size:11px;color:var(--text-muted)">Payment: ${o.payMethod} · <span style="color:${o.payStatus==='paid'?'var(--success)':'var(--warning)'}">${o.payStatus}</span>${o.emergency?'<span class="emg" style="margin-left:var(--s-2)">🚨 Emergency</span>':''}</div>
       </div></div>
       ${o.dName?`<div class="card" style="margin-bottom:var(--s-4)"><div class="card-body" style="display:flex;align-items:center;gap:var(--s-4)"><div class="avatar av-lg">🏍️</div><div style="flex:1"><h4>${o.dName}</h4><p style="font-size:var(--text-sm);color:var(--text-secondary)">Delivery Partner</p></div><button class="btn btn-p btn-sm" onclick="A.toast('Calling...','info')">📞 Call</button></div></div>`:''}
-      ${o.status==='delivered'&&!o.rating?`<div class="card"><div class="card-body"><h4 style="text-align:center;margin-bottom:var(--s-3)">⭐ Rate Your Order</h4><div class="rating-stars" id="ratingStars">${[1,2,3,4,5].map(n=>`<span class="star" onclick="A.setRating(${n},'${o.id}')">★</span>`).join('')}</div><textarea class="rating-input" id="reviewText" placeholder="Share your experience..."></textarea><button class="btn btn-p btn-block" style="margin-top:var(--s-3)" onclick="A.submitRating('${o.id}')">Submit Review</button></div></div>`:''}
-      ${o.rating?`<div class="card"><div class="card-body" style="text-align:center"><div style="font-size:24px;margin-bottom:var(--s-2)">${'⭐'.repeat(o.rating)}</div><p style="font-size:var(--text-sm);color:var(--text-secondary)">"${o.review||'Reviewed'}"</p></div></div>`:''}
+      ${(o.status==='completed'||o.status==='delivered')?`<button class="btn btn-g btn-block" style="margin-bottom:var(--s-4)" onclick="A.printInvoice('${o.id}')">🖨️ Download Invoice / Receipt</button>`:``}
+      ${(o.status==='completed'||o.status==='delivered')&&!o.rating?`<div class="card"><div class="card-body"><h4 style="text-align:center;margin-bottom:var(--s-3)">⭐ Rate Your Order</h4><div class="rating-stars" id="ratingStars">${[1,2,3,4,5].map(n=>`<span class="star" onclick="A.setRating(${n},'${o.id}')">★</span>`).join('')}</div><textarea class="rating-input" id="reviewText" placeholder="Share your experience..."></textarea><button class="btn btn-p btn-block" style="margin-top:var(--s-3)" onclick="A.submitRating('${o.id}')">Submit Review</button></div></div>`:''}
+      ${o.rating?`<div class="card"><div class="card-body" style="text-align:center"><div style="font-size:24px;margin-bottom:var(--s-2)">${'⭐'.repeat(o.rating)}</div><p style="font-size:var(--text-sm);color:var(--text-secondary)">&quot;${o.review||'Reviewed'}&quot;</p></div></div>`:''}
     </div>`;
   }
 
@@ -675,12 +744,60 @@ class DormedsApp {
   // ---- Orders ----
   cOrders() {
     const ords = this.db.get('orders').filter(o => o.uid === 'U1').reverse();
-    const sc = {pending:'badge-w',accepted:'badge-i',preparing:'badge-i',packed:'badge-p',out_for_delivery:'badge-p',delivered:'badge-s',cancelled:'badge-e'};
-    const sl = {pending:'Pending',accepted:'Accepted',preparing:'Preparing',packed:'Packed',out_for_delivery:'On the Way',delivered:'Delivered',cancelled:'Cancelled'};
-    return `<div style="padding:var(--s-4)"><h3 style="margin-bottom:var(--s-4)">📦 My Orders</h3>
+    const sc = {pending:'badge-w',accepted:'badge-i',preparing:'badge-i',packed:'badge-p',out_for_delivery:'badge-p',pending_physical_verification:'badge-w',completed:'badge-s',delivered:'badge-s',cancelled:'badge-e',delivery_failed:'badge-e'};
+    const sl = {pending:'Pending',accepted:'Accepted',preparing:'Preparing',packed:'Packed',out_for_delivery:'On the Way',pending_physical_verification:'⏳ Verification',completed:'Completed',delivered:'Delivered',cancelled:'Cancelled',delivery_failed:'Failed'};
+
+    // Smart Refill Predictor
+    const deliveredOrds = ords.filter(o => ['completed','delivered'].includes(o.status));
+    const medOrderDates = {}; // medId -> [dates]
+    deliveredOrds.forEach(o => {
+      o.items.forEach(it => {
+        if (!medOrderDates[it.mid]) medOrderDates[it.mid] = { name: it.name, icon: it.icon || '💊', dates: [] };
+        medOrderDates[it.mid].dates.push(new Date(o.createdAt));
+      });
+    });
+    const refillSuggestions = [];
+    Object.entries(medOrderDates).forEach(([mid, data]) => {
+      if (data.dates.length < 2) return;
+      const sorted = data.dates.sort((a,b) => a-b);
+      const avgGap = (sorted[sorted.length-1] - sorted[0]) / ((sorted.length - 1) * 86400000); // avg days between orders
+      if (avgGap < 5) return; // skip if ordered too frequently (not a recurring med)
+      const lastDate = sorted[sorted.length-1];
+      const nextDate = new Date(lastDate.getTime() + avgGap * 86400000);
+      const daysLeft = Math.round((nextDate - Date.now()) / 86400000);
+      if (daysLeft <= 7 && daysLeft >= -3) refillSuggestions.push({ mid, ...data, daysLeft, nextDate });
+    });
+
+    const refillHtml = refillSuggestions.length > 0 ? `
+    <div style="margin-bottom:var(--s-5)">
+      <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:var(--s-3)">🔮 Smart Refill Predictor</div>
+      ${refillSuggestions.map(s => `
+      <div style="display:flex;align-items:center;gap:var(--s-3);padding:var(--s-3) var(--s-4);background:${s.daysLeft<=0?'var(--error-bg)':'rgba(59,130,246,.06)'};border:1.5px solid ${s.daysLeft<=0?'rgba(239,68,68,.3)':'var(--border)'};border-radius:var(--r-lg);margin-bottom:var(--s-2)">
+        <div style="font-size:24px">${s.icon}</div>
+        <div style="flex:1">
+          <div style="font-size:var(--text-sm);font-weight:600">${s.name}</div>
+          <div style="font-size:11px;color:${s.daysLeft<=0?'var(--error)':'var(--text-muted)'}">
+            ${s.daysLeft <= 0 ? `⚠️ Overdue by ${Math.abs(s.daysLeft)} day(s)` : `🔔 Refill in ~${s.daysLeft} day(s)`}
+          </div>
+        </div>
+        <button class="btn btn-p btn-sm" onclick="A.addCart('${s.mid}');location.hash='#/customer/cart'">Reorder →</button>
+      </div>`).join('')}
+    </div>` : '';
+
+    return `<div style="padding:var(--s-4)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--s-4)">
+        <h3>📦 My Orders</h3>
+        ${deliveredOrds.length > 0 ? `<button class="btn btn-g btn-sm" onclick="A.reorder()">🔄 Reorder Last</button>` : ''}
+      </div>
+      ${refillHtml}
       ${!ords.length
         ?`<div style="text-align:center;padding:var(--s-16)"><div style="font-size:48px;margin-bottom:var(--s-4)">📦</div><h3>No orders yet</h3><button class="btn btn-p" style="margin-top:var(--s-6)" onclick="location.hash='#/customer/home'">Start Shopping</button></div>`
-        :ords.map(o=>`<div class="ord-c" onclick="location.hash='#/customer/tracking/${o.id}'"><div class="ord-top"><span class="ord-ph">${o.phName}</span><span class="badge ${sc[o.status]}">${sl[o.status]}</span></div><div class="ord-items">${o.items.map(i=>i.name).join(', ')}</div><div class="ord-bot"><span class="ord-total">₹${o.total}</span><span class="ord-date">${new Date(o.createdAt).toLocaleDateString('en-IN')}</span></div>${o.emergency?'<span class="emg" style="margin-top:var(--s-2)">🚨 Emergency</span>':''}</div>`).join('')}
+        :ords.map(o=>`<div class="ord-c" onclick="location.hash='#/customer/tracking/${o.id}'">
+          <div class="ord-top"><span class="ord-ph">${o.phName}${o.isDemo?' <span style="font-size:10px;background:rgba(124,58,237,.15);color:#A78BFA;padding:1px 6px;border-radius:4px">DEMO</span>':''}</span><span class="badge ${sc[o.status]}">${sl[o.status]}</span></div>
+          <div class="ord-items">${o.items.map(i=>i.name).join(', ')}</div>
+          <div class="ord-bot"><span class="ord-total">₹${o.total}</span><span class="ord-date">${new Date(o.createdAt).toLocaleDateString('en-IN')}</span></div>
+          ${o.emergency?'<span class="emg" style="margin-top:var(--s-2)">🚨 Emergency</span>':''}
+        </div>`).join('')}
     </div>`;
   }
 
@@ -690,17 +807,22 @@ class DormedsApp {
     const ords = this.db.get('orders').filter(o=>o.uid==='U1');
     const spent = ords.reduce((s,o)=>s+o.total,0);
     const isDark = document.documentElement.getAttribute('data-theme') !== 'light';
+    const coins = this.db.getLoyaltyBalance ? this.db.getLoyaltyBalance('U1') : 0;
     return `<div class="prof">
       <div class="prof-head"><div class="avatar av-xl">${u?.avatar||'RS'}</div><h2>${u?.name||this.user?.name}</h2><p>+91 ${u?.phone||this.user?.phone}</p></div>
       <div class="prof-stats">
         <div class="ps-item"><div class="ps-num">${ords.length}</div><div class="ps-lbl">Orders</div></div>
         <div class="ps-item"><div class="ps-num">₹${spent}</div><div class="ps-lbl">Spent</div></div>
-        <div class="ps-item"><div class="ps-num">${u?.saved?.length||0}</div><div class="ps-lbl">Saved</div></div>
+        <div class="ps-item" onclick="location.hash='#/customer/loyalty'" style="cursor:pointer" title="View DORM Coins">
+          <div class="ps-num" style="color:#FCD34D">${coins}🪙</div>
+          <div class="ps-lbl">DORM Coins</div>
+        </div>
       </div>
       <div class="menu-list">
         <div class="menu-item" onclick="location.hash='#/customer/orders'"><div class="mi-icon" style="background:var(--primary-subtle);color:var(--primary)">📋</div><div class="mi-text"><h4>My Orders</h4><p>View order history</p></div><span class="mi-arrow">→</span></div>
-        <div class="menu-item" onclick="A.toast('Coming soon','info')"><div class="mi-icon" style="background:var(--error-bg);color:var(--error)">❤️</div><div class="mi-text"><h4>Saved Items</h4><p>${u?.saved?.length||0} items</p></div><span class="mi-arrow">→</span></div>
-        <div class="menu-item" onclick="A.toast('Coming soon','info')"><div class="mi-icon" style="background:var(--info-bg);color:var(--info)">📍</div><div class="mi-text"><h4>Addresses</h4><p>${u?.addresses?.length||0} saved</p></div><span class="mi-arrow">→</span></div>
+        <div class="menu-item" onclick="location.hash='#/customer/health'"><div class="mi-icon" style="background:rgba(239,68,68,.1);color:#EF4444">❤️</div><div class="mi-text"><h4>Health Profile</h4><p>Vitals & records</p></div><span class="mi-arrow">→</span></div>
+        <div class="menu-item" onclick="location.hash='#/customer/loyalty'"><div class="mi-icon" style="background:rgba(251,191,36,.1);color:#F59E0B">🪙</div><div class="mi-text"><h4>DORM Coins</h4><p>${this.db.getLoyaltyBalance('U1')} coins · ₹${Math.floor(this.db.getLoyaltyBalance('U1')/10)} value</p></div><span class="mi-arrow">→</span></div>
+        <div class="menu-item" onclick="location.hash='#/customer/reminders'"><div class="mi-icon" style="background:rgba(139,92,246,.1);color:#8B5CF6">⏰</div><div class="mi-text"><h4>Medicine Reminders</h4><p>${this.db.get('reminder_schedules').filter(r=>r.userId==='U1'&&r.enabled).length} active</p></div><span class="mi-arrow">→</span></div>
         <div class="menu-item" onclick="location.hash='#/customer/prescription'"><div class="mi-icon" style="background:var(--warning-bg);color:var(--warning)">📋</div><div class="mi-text"><h4>Prescriptions</h4><p>Upload & manage</p></div><span class="mi-arrow">→</span></div>
       </div>
       <div class="menu-list">
@@ -713,7 +835,10 @@ class DormedsApp {
         <div class="menu-item" onclick="A.toast('Help center coming soon','info')"><div class="mi-icon" style="background:rgba(139,92,246,.1);color:#8B5CF6">❓</div><div class="mi-text"><h4>Help & Support</h4><p>FAQs, contact us</p></div><span class="mi-arrow">→</span></div>
       </div>
       <button class="btn btn-d btn-block" style="margin-top:var(--s-4)" onclick="A.logout()">🚪 Logout</button>
-      <p style="text-align:center;font-size:11px;color:var(--text-muted);margin-top:var(--s-6)">DORMEDS v2.1 · Made with ❤️ in India</p>
+      <div style="margin-top:var(--s-6);text-align:center">
+        <button class="btn btn-g btn-sm" onclick="A.startDemoMode()" title="Watch a live order demo">🎬 Live Demo Mode</button>
+      </div>
+      <p style="text-align:center;font-size:11px;color:var(--text-muted);margin-top:var(--s-4)">DORMEDS v3.0 · Made with ❤️ in India</p>
     </div>`;
   }
 
@@ -793,12 +918,45 @@ class DormedsApp {
     const done = ords.filter(o=>o.status==='delivered').length;
     const rev  = ords.filter(o=>o.status==='delivered').reduce((s,o)=>s+o.total,0);
     const recent = ords.slice(-5).reverse();
+    // Today's summary
+    const today = new Date().toDateString();
+    const todayOrds = ords.filter(o => new Date(o.createdAt).toDateString() === today);
+    const todayRev = todayOrds.filter(o => ['delivered','completed'].includes(o.status)).reduce((s,o)=>s+o.total,0);
+    const todayPending = todayOrds.filter(o => o.status === 'pending').length;
+    const todayCompleted = todayOrds.filter(o => ['delivered','completed'].includes(o.status)).length;
+
     return `<div class="stats-g">
       <div class="stat"><div class="st-icon" style="background:var(--warning-bg);color:var(--warning)">📦</div><div class="st-val">${pend}</div><div class="st-label">Pending</div></div>
       <div class="stat"><div class="st-icon" style="background:var(--info-bg);color:var(--info)">⚙️</div><div class="st-val">${prep}</div><div class="st-label">Preparing</div></div>
       <div class="stat"><div class="st-icon" style="background:var(--success-bg);color:var(--success)">✅</div><div class="st-val">${done}</div><div class="st-label">Delivered</div></div>
       <div class="stat"><div class="st-icon" style="background:var(--primary-subtle);color:var(--primary)">💰</div><div class="st-val">₹${rev.toLocaleString()}</div><div class="st-label">Revenue</div></div>
     </div>
+
+    <!-- Today's Summary Panel -->
+    <div class="card" style="margin-bottom:var(--s-4);background:linear-gradient(135deg,rgba(59,130,246,.06),rgba(34,197,94,.04))">
+      <div class="card-head" style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <h3 style="font-size:var(--text-base)">📅 Today's Summary</h3>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:2px">${new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</div>
+        </div>
+        <button class="btn btn-g btn-sm" onclick="A.printDailyReport()">🖨️ Print Report</button>
+      </div>
+      <div class="card-body" style="display:grid;grid-template-columns:repeat(3,1fr);gap:var(--s-4);text-align:center">
+        <div>
+          <div style="font-size:var(--text-2xl);font-weight:800;color:var(--primary)">${todayOrds.length}</div>
+          <div style="font-size:11px;color:var(--text-muted)">Orders Today</div>
+        </div>
+        <div>
+          <div style="font-size:var(--text-2xl);font-weight:800;color:var(--success)">₹${todayRev.toLocaleString()}</div>
+          <div style="font-size:11px;color:var(--text-muted)">Revenue Today</div>
+        </div>
+        <div>
+          <div style="font-size:var(--text-2xl);font-weight:800;color:var(--warning)">${todayPending}</div>
+          <div style="font-size:11px;color:var(--text-muted)">Pending Now</div>
+        </div>
+      </div>
+    </div>
+
     <div class="chart"><div class="chart-head"><h3>📈 Weekly Revenue</h3></div><div class="chart-bars" style="height:200px">
       ${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map((d,i)=>{const h=[45,65,55,80,70,90,60][i];return`<div class="chart-bar" style="height:${h}%"><span class="cb-val">₹${h*50}</span><span class="cb-lbl">${d}</span></div>`}).join('')}
     </div></div>
@@ -806,6 +964,26 @@ class DormedsApp {
       ${recent.map(o=>`<div class="dl-item"><div class="dl-av">${o.uName?.[0]||'📦'}</div><div style="flex:1;min-width:0"><div style="font-weight:600;font-size:var(--text-sm)">#${o.id}</div><div style="font-size:11px;color:var(--text-secondary)">${o.uName}</div></div><div style="text-align:right"><div style="font-weight:700;font-size:var(--text-sm)">₹${o.total}</div><span class="badge ${o.status==='delivered'?'badge-s':o.status==='pending'?'badge-w':'badge-i'}" style="font-size:10px">${o.status.replace(/_/g,' ')}</span></div></div>`).join('')}
     </div>`;
   }
+
+  printDailyReport() {
+    const today = new Date().toDateString();
+    const ords = this.db.get('orders').filter(o => o.phId==='P1' && new Date(o.createdAt).toDateString()===today);
+    const rev = ords.filter(o=>['delivered','completed'].includes(o.status)).reduce((s,o)=>s+o.total,0);
+    const win = window.open('', '_blank');
+    win.document.write(`<!DOCTYPE html><html><head><title>Daily Report — DORMEDS</title>
+    <style>body{font-family:Arial,sans-serif;padding:32px;max-width:600px;margin:0 auto}h1{color:#2563EB;margin-bottom:4px}h2{font-size:14px;font-weight:400;color:#666;margin-bottom:24px}table{width:100%;border-collapse:collapse;margin:16px 0}th{background:#2563EB;color:#fff;padding:8px 12px;text-align:left;font-size:12px}td{padding:8px 12px;border-bottom:1px solid #eee;font-size:13px}.total{font-size:15px;font-weight:700;margin-top:16px}.footer{margin-top:32px;font-size:11px;color:#999;border-top:1px solid #eee;padding-top:16px}</style>
+    </head><body>
+    <h1>💊 DORMEDS — MedPlus</h1><h2>Daily Sales Report · ${new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</h2>
+    <table><thead><tr><th>Order #</th><th>Patient</th><th>Items</th><th>Total</th><th>Status</th></tr></thead><tbody>
+    ${ords.map(o=>`<tr><td>#${o.id}</td><td>${o.uName}</td><td>${o.items.map(i=>i.name).join(', ')}</td><td>₹${o.total}</td><td>${o.status}</td></tr>`).join('')}
+    </tbody></table>
+    <div class="total">Total Orders: ${ords.length} &nbsp;|&nbsp; Revenue: ₹${rev.toLocaleString()}</div>
+    <div class="footer">Generated by DORMEDS Platform · ${new Date().toLocaleString('en-IN')}<br><button onclick="window.print()" style="margin-top:12px;padding:8px 20px;background:#2563EB;color:#fff;border:none;border-radius:6px;cursor:pointer">🖨️ Print</button></div>
+    </body></html>`);
+    win.document.close();
+  }
+
+
 
   phOrders() {
     const ords = this.db.get('orders').filter(o=>o.phId==='P1').reverse();
@@ -840,9 +1018,23 @@ class DormedsApp {
       o.items.forEach(it => { const i = meds.findIndex(m=>m.id===it.mid); if(i!==-1){meds[i].stock+=it.qty;} });
       this.db.set('medicines', meds);
     }
+    // Push notification to customer
+    const notifMap = {
+      accepted:   { icon:'✅', title:'Order Accepted!',        body:`Your order #${oid} has been accepted by the pharmacy.` },
+      preparing:  { icon:'⚙️', title:'Being Prepared',         body:`Your order #${oid} is being prepared now.` },
+      packed:     { icon:'📦', title:'Order Packed!',           body:`Your order #${oid} is packed and waiting for pickup.` },
+      out_for_delivery: { icon:'🏍️', title:'Out for Delivery!', body:`Your order #${oid} is on the way!` },
+      completed:  { icon:'🎉', title:'Order Delivered!',        body:`Your order #${oid} has been delivered. How was it?` },
+      cancelled:  { icon:'❌', title:'Order Cancelled',         body:`Your order #${oid} was cancelled by the pharmacy.` },
+    };
+    if (notifMap[status] && o.uid) {
+      this.db.addNotification(o.uid, { ...notifMap[status], type:'order', link:`#/customer/tracking/${oid}` });
+    }
     this.toast(`Order #${oid} → ${status.replace(/_/g,' ')}`);
     this.route();
   }
+
+
 
   phInventory() {
     const meds = this.db.get('medicines').filter(m=>m.phId==='P1');
@@ -949,12 +1141,185 @@ class DormedsApp {
   }
 
   delCard(o) {
-    const actions = {packed:{l:'📦 Pick Up',next:'out_for_delivery'},out_for_delivery:{l:'✅ Mark Delivered',next:'delivered'}};
-    const act = actions[o.status];
+    // Determine action based on status
+    // packed → show checklist before out_for_delivery
+    // out_for_delivery → show OTP before pending_physical_verification
+    // pending_physical_verification → admin marks physical verification
+    const isPacked = o.status === 'packed';
+    const isOfd = o.status === 'out_for_delivery';
+    const isPPV = o.status === 'pending_physical_verification';
+
     return `<div class="del-card"><div class="del-head"><div><div style="font-weight:600">#${o.id}</div><div style="font-size:11px;color:var(--text-secondary)">${o.uName}</div></div>${o.emergency?'<span class="emg">🚨 Emergency</span>':''}<span class="badge badge-p">${o.status.replace(/_/g,' ')}</span></div>
     <div class="del-body"><div class="del-loc"><div class="del-dots"><div class="del-dot"></div><div class="del-line"></div><div class="del-dot fill"></div></div><div style="flex:1"><div style="margin-bottom:var(--s-3)"><div class="del-lbl">Pickup</div><div class="del-addr">${o.phName}</div></div><div><div class="del-lbl">Delivery</div><div class="del-addr">${o.address}</div></div></div></div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-top:var(--s-3)"><span style="font-weight:700">₹${o.total} · ${o.payMethod}</span><span style="font-size:var(--text-sm);color:var(--text-secondary)">${o.items.length} items</span></div></div>
-    ${act?`<div class="del-acts"><button class="btn btn-p btn-sm" style="flex:1" onclick="A.updOrd('${o.id}','${act.next}')">${act.l}</button><button class="btn btn-g btn-sm" onclick="A.toast('Calling customer...','info')">📞</button></div>`:''}</div>`;
+    <div class="del-acts">
+      ${isPacked ? `<button class="btn btn-p btn-sm" style="flex:1" onclick="A.showDeliveryChecklist('${o.id}')">📋 Pre-Pickup Checklist</button>` : ''}
+      ${isOfd ? `<button class="btn btn-p btn-sm" style="flex:1" onclick="A.showOtpVerify('${o.id}')">🔢 Verify OTP & Handover</button>` : ''}
+      ${isPPV ? `<div style="flex:1;text-align:center"><span class="badge badge-w">⏳ Awaiting Physical Verification</span><div style="font-size:11px;color:var(--text-muted);margin-top:4px">Pharmacy/Admin confirms Rx</div></div>` : ''}
+      ${(!isPacked && !isOfd && !isPPV) ? '' : ''}
+      <button class="btn btn-g btn-sm" onclick="A.toast('Calling customer...','info')">📞</button>
+    </div></div>`;
+  }
+
+  // ---- Delivery Checklist Modal ----
+  showDeliveryChecklist(oid) {
+    const o = this.db.getOne('orders', oid);
+    if (!o) return;
+    // Check if checklist already done
+    const existing = this.db.get('delivery_checklists').find(c => c.orderId === oid);
+    if (existing) {
+      // Already completed — go directly to out_for_delivery
+      this._completeChecklist(oid, existing);
+      return;
+    }
+
+    document.getElementById('modal-root').innerHTML = `
+    <div class="modal-ov" onclick="">
+    <div class="checklist-modal">
+      <div class="checklist-header">
+        <h3>📋 Pre-Pickup Checklist</h3>
+        <button class="modal-x" onclick="document.getElementById('modal-root').innerHTML=''">✕</button>
+      </div>
+      <div class="checklist-body">
+        <p style="font-size:var(--text-sm);color:var(--text-secondary);margin-bottom:var(--s-5)">
+          Complete ALL items before picking up Order #${oid}
+        </p>
+
+        <div class="checklist-item" id="cli-picked" onclick="A.toggleChecklistItem('picked')">
+          <input type="checkbox" id="chk-picked" onclick="event.stopPropagation();A.toggleChecklistItem('picked')"/>
+          <div><div class="ci-label">✅ Medicines picked from pharmacy</div><div class="ci-desc">Verify all ${o.items.length} item(s) are packed</div></div>
+          <span class="checklist-req-badge">Required</span>
+        </div>
+        <div class="checklist-item" id="cli-sealed" onclick="A.toggleChecklistItem('sealed')">
+          <input type="checkbox" id="chk-sealed" onclick="event.stopPropagation();A.toggleChecklistItem('sealed')"/>
+          <div><div class="ci-label">📦 Package sealed & tamper-proof</div><div class="ci-desc">Ensure packaging is sealed correctly</div></div>
+          <span class="checklist-req-badge">Required</span>
+        </div>
+        <div class="checklist-item" id="cli-address" onclick="A.toggleChecklistItem('address')">
+          <input type="checkbox" id="chk-address" onclick="event.stopPropagation();A.toggleChecklistItem('address')"/>
+          <div><div class="ci-label">📍 Delivery address confirmed</div><div class="ci-desc">${o.address}</div></div>
+          <span class="checklist-req-badge">Required</span>
+        </div>
+
+        <div class="counselling-toggle-row">
+          <div class="ct-label">🩺 Does patient need counselling?</div>
+          <div class="yn-toggle">
+            <button class="yn-btn yes" id="yn-yes" onclick="A.setCounselling(true)">YES</button>
+            <button class="yn-btn no active" id="yn-no" onclick="A.setCounselling(false)">NO</button>
+          </div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:8px">If YES, a counselling request will be auto-created for this patient.</div>
+        </div>
+      </div>
+      <div class="checklist-footer">
+        <button class="btn btn-p btn-block" onclick="A.submitChecklist('${oid}')">
+          🚀 Start Delivery
+        </button>
+      </div>
+    </div></div>`;
+    this._checklistState = { picked: false, sealed: false, address: false, counselling: false };
+  }
+
+  toggleChecklistItem(key) {
+    if (!this._checklistState) this._checklistState = {};
+    this._checklistState[key] = !this._checklistState[key];
+    const chk = document.getElementById('chk-' + key);
+    const row = document.getElementById('cli-' + key);
+    if (chk) chk.checked = this._checklistState[key];
+    if (row) row.classList.toggle('checked', this._checklistState[key]);
+  }
+
+  setCounselling(val) {
+    if (!this._checklistState) this._checklistState = {};
+    this._checklistState.counselling = val;
+    document.getElementById('yn-yes')?.classList.toggle('active', val);
+    document.getElementById('yn-no')?.classList.toggle('active', !val);
+  }
+
+  submitChecklist(oid) {
+    const s = this._checklistState || {};
+    if (!s.picked || !s.sealed || !s.address) {
+      this.toast('⚠️ Complete ALL required checklist items before proceeding', 'error');
+      return;
+    }
+    // Save checklist
+    const checklist = {
+      id: 'DC' + Date.now(), orderId: oid, deliveryPartnerId: 'D1',
+      pickedConfirmed: s.picked, sealedConfirmed: s.sealed, addressConfirmed: s.address,
+      counsellingRequired: !!s.counselling, completedAt: new Date().toISOString()
+    };
+    this.db.add('delivery_checklists', checklist);
+
+    // If counselling YES → auto-create counselling request
+    if (s.counselling) {
+      const o = this.db.getOne('orders', oid);
+      if (o) {
+        this.db.add('counselling_requests', {
+          id: 'CR' + Date.now(), orderId: oid,
+          patientId: o.uid, patientName: o.uName,
+          status: 'counselling_pending', notes: '',
+          counsellorId: null, counsellorName: null,
+          createdAt: new Date().toISOString(), completedAt: null
+        });
+        this.toast('🩺 Counselling request auto-created for ' + o.uName);
+      }
+    }
+
+    document.getElementById('modal-root').innerHTML = '';
+    this._completeChecklist(oid, checklist);
+  }
+
+  _completeChecklist(oid, checklist) {
+    this.db.update('orders', oid, { status:'out_for_delivery', updatedAt:new Date().toISOString() });
+    this.toast('✅ Delivery started! Order #' + oid + ' is Out for Delivery');
+    this.route();
+  }
+
+  // ---- OTP Verification Modal ----
+  showOtpVerify(oid) {
+    const o = this.db.getOne('orders', oid);
+    if (!o) return;
+    // Generate OTP if not exists
+    let otp = o.deliveryOtp;
+    if (!otp) {
+      otp = this.db.generateOtp();
+      this.db.update('orders', oid, { deliveryOtp: otp });
+    }
+
+    document.getElementById('modal-root').innerHTML = `
+    <div class="modal-ov" onclick="">
+    <div class="otp-verify-modal">
+      <div class="ovh">
+        <h3>🔢 Verify Delivery OTP</h3>
+        <button class="modal-x" onclick="document.getElementById('modal-root').innerHTML=''">✕</button>
+      </div>
+      <div class="ovb">
+        <div class="otp-order-info">
+          <strong>Order #${oid}</strong> · ${o.uName}<br/>
+          <span style="font-size:11px">${o.address}</span>
+        </div>
+        <p style="font-size:var(--text-sm);color:var(--text-secondary);margin-bottom:var(--s-2)">Ask customer for the 4-digit OTP</p>
+        <input class="otp-input-lg" type="text" id="del-otp-inp" maxlength="4" placeholder="_ _ _ _"
+          onkeydown="if(event.key==='Enter')A.confirmDeliveryOtp('${oid}')"/>
+        <div class="otp-hint">Demo OTP: <strong>${otp}</strong> (shared with customer)</div>
+        <button class="btn btn-p btn-block btn-lg" style="margin-top:var(--s-5)" onclick="A.confirmDeliveryOtp('${oid}')">
+          ✅ Confirm Handover
+        </button>
+      </div>
+    </div></div>`;
+    setTimeout(() => document.getElementById('del-otp-inp')?.focus(), 200);
+  }
+
+  confirmDeliveryOtp(oid) {
+    const entered = document.getElementById('del-otp-inp')?.value?.trim();
+    const o = this.db.getOne('orders', oid);
+    if (!o) return;
+    if (!entered || entered.length < 4) { this.toast('Enter 4-digit OTP', 'warning'); return; }
+    if (entered !== o.deliveryOtp) { this.toast('❌ Wrong OTP. Please check with customer.', 'error'); return; }
+    // OTP verified → move to pending_physical_verification
+    this.db.update('orders', oid, { otpVerified: true, status: 'pending_physical_verification', updatedAt: new Date().toISOString() });
+    document.getElementById('modal-root').innerHTML = '';
+    this.toast('✅ OTP Verified! Order pending physical prescription verification.');
+    this.route();
   }
 
   delOrders() {
@@ -967,8 +1332,8 @@ class DormedsApp {
   }
 
   acceptDel(oid) {
-    this.db.update('orders', oid, { dId:'D1', dName:'Ravi Kumar', status:'out_for_delivery', updatedAt:new Date().toISOString() });
-    this.toast('Delivery accepted!');
+    this.db.update('orders', oid, { dId:'D1', dName:'Ravi Kumar', status:'packed', updatedAt:new Date().toISOString() });
+    this.toast('Delivery accepted! Complete checklist to start delivery.');
     this.route();
   }
 
@@ -1147,7 +1512,35 @@ class DormedsApp {
     this.toast('Commission updated!');
     this.route();
   }
+
+  // ---- Exercise Library wrapper (for customer #/customer/exercises route) ----
+  _wrapExerciseLib() {
+    this._exerciseFilters = this._exerciseFilters || {};
+    const exercises = this.db.get('exercise_library');
+    const painTypes  = [...new Set(exercises.map(e => e.painType))];
+    const bodyParts  = [...new Set(exercises.map(e => e.bodyPart))];
+    return `<div id="exercise-lib-root">${this._renderExerciseLibrary(exercises, painTypes, bodyParts, this._exerciseFilters, 'customer')}</div>`;
+  }
+
+  // ---- Unified order status badge helper (new statuses included) ----
+  ordStatus(status) {
+    const map = {
+      pending:        { cls:'badge-w',  lbl:'Pending' },
+      accepted:       { cls:'badge-i',  lbl:'Accepted' },
+      preparing:      { cls:'badge-i',  lbl:'Preparing' },
+      packed:         { cls:'badge-p',  lbl:'Packed' },
+      out_for_delivery: { cls:'badge-p', lbl:'Out for Delivery' },
+      pending_physical_verification: { cls:'badge-w', lbl:'Verification Pending' },
+      completed:      { cls:'badge-s',  lbl:'Completed' },
+      delivered:      { cls:'badge-s',  lbl:'Delivered' },
+      delivery_failed:{ cls:'badge-e',  lbl:'Failed' },
+      cancelled:      { cls:'badge-e',  lbl:'Cancelled' },
+    };
+    const s = map[status] || { cls:'badge-n', lbl: status?.replace(/_/g,' ') || 'Unknown' };
+    return `<span class="badge ${s.cls}">${s.lbl}</span>`;
+  }
 }
+
 
 // ---- Boot: initialized in index.html after all modules load ----
 // Apply saved theme immediately
