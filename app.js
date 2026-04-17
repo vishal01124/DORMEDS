@@ -17,6 +17,9 @@ class DormedsApp {
   init() {
     window.addEventListener('hashchange', () => this.route());
     window.addEventListener('resize', () => this._onResize());
+    document.body.style.maxWidth = "500px";
+document.body.style.margin = "auto";
+document.body.style.padding = "10px";
     this.showSplash();
     // Boot extras after splash
     setTimeout(() => this._bootExtras && this._bootExtras(), 2500);
@@ -31,8 +34,8 @@ class DormedsApp {
     this._resizeTimer = setTimeout(() => this.route(), 100);
   }
 
-  isMobile() { return window.innerWidth < 640; }
-  isTablet() { return window.innerWidth >= 640 && window.innerWidth < 1024; }
+  isMobile() { return window.innerWidth < 768; }
+  isTablet() { return window.innerWidth >= 768 && window.innerWidth < 1024; }
   isDesktop() { return window.innerWidth >= 1024; }
 
   // ---- Toast ----
