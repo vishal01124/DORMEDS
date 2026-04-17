@@ -69,8 +69,12 @@ window.supabase = supabase;
 console.log("Supabase connected 🚀");
 </script>
 <script type="module">
-const { data, error } = await supabase.from('users').select('*')
-console.log("DATA FROM DB 👉", data)
+async function loadData() {
+  const { data, error } = await supabase.from('users').select('*')
+  console.log("DATA FROM DB 👉", data)
+}
+
+loadData();
 </script>
 </body>
 </html>
