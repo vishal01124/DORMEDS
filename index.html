@@ -60,15 +60,13 @@
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
-const supabase = createClient(
-  'https://qezcfxnnigjuurxolusi.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlemNmeG5uaWdqdXVyeG9sdXNsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0MDEzODksImV4cCI6MjA5MTk3NzM4OX0.x6MpgRtpSqhMFfobQkDh0QM2tHGywR1sqA5woxDLfBo'
-);
-window.supabase = supabase;
+const supabaseUrl = "https://qezcfxnnigjuurxolusi.supabase.co";
+const supabaseKey = "PASTE_YOUR_ANON_KEY";
+
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 console.log("Supabase connected 🚀");
-</script>
-<script type="module">
+
 async function loadData() {
   const { data, error } = await supabase.from('users').select('*')
   console.log("DATA FROM DB 👉", data)
