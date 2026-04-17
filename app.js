@@ -31,8 +31,8 @@ class DormedsApp {
     this._resizeTimer = setTimeout(() => this.route(), 100);
   }
 
-  isMobile() { return window.innerWidth < 768; }
-  isTablet() { return window.innerWidth >= 768 && window.innerWidth < 1024; }
+  isMobile() { return window.innerWidth < 640; }
+  isTablet() { return window.innerWidth >= 640 && window.innerWidth < 1024; }
   isDesktop() { return window.innerWidth >= 1024; }
 
   // ---- Toast ----
