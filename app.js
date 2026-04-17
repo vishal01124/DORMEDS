@@ -17,10 +17,7 @@ class DormedsApp {
   init() {
     window.addEventListener('hashchange', () => this.route());
     window.addEventListener('resize', () => this._onResize());
-    document.body.style.maxWidth = "500px";
-document.body.style.margin = "auto";
-document.body.style.padding = "10px";
-    this.showSplash();
+     this.showSplash();
     // Boot extras after splash
     setTimeout(() => this._bootExtras && this._bootExtras(), 2500);
   }
