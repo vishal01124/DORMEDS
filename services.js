@@ -17,14 +17,14 @@ Object.assign(DormedsApp.prototype, {
         <p style="color:var(--text-secondary);font-size:var(--text-sm)">Book physiotherapy sessions, lab tests, and more from home.</p>
       </div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:var(--s-4);margin-bottom:var(--s-6)">
-        <div class="service-tile" onclick="${active&&plan?.id==='SP2'?`location.hash='#/customer/bptbook'`:`A.showFeatureLock('bpt')`}" style="background:linear-gradient(135deg,#1E40AF,#3B82F6);border-radius:var(--r-xl);padding:var(--s-6);cursor:pointer;position:relative;overflow:hidden">
+        <div class="service-tile" onclick="location.hash='#/customer/bptbook'" style="background:linear-gradient(135deg,#1E40AF,#3B82F6);border-radius:var(--r-xl);padding:var(--s-6);cursor:pointer;position:relative;overflow:hidden">
           <div style="position:absolute;top:-10px;right:-10px;font-size:80px;opacity:.12">🦴</div>
-          ${!active||plan?.id!=='SP2'?`<div class="sub-lock-badge">🔒 Premium</div>`:'<div class="sub-lock-badge" style="background:#22C55E">✅ Included</div>'}
+          <div class="sub-lock-badge" style="background:#22C55E">✅ Free for All</div>
           <div style="font-size:40px;margin-bottom:var(--s-3)">🧘</div>
           <h3 style="color:#fff;margin-bottom:var(--s-1)">Physiotherapy</h3>
           <p style="color:rgba(255,255,255,.8);font-size:var(--text-sm);margin-bottom:var(--s-3)">Home & clinic BPT sessions by certified therapists</p>
           <div style="display:flex;gap:var(--s-2);flex-wrap:wrap">
-            <span style="background:rgba(255,255,255,.15);color:#fff;font-size:11px;padding:4px 10px;border-radius:var(--r-full)">From ₹500/session</span>
+            <span style="background:rgba(255,255,255,.15);color:#fff;font-size:11px;padding:4px 10px;border-radius:var(--r-full)">Free Sessions</span>
             <span style="background:rgba(255,255,255,.15);color:#fff;font-size:11px;padding:4px 10px;border-radius:var(--r-full)">Home Visit Available</span>
           </div>
         </div>
@@ -54,7 +54,7 @@ Object.assign(DormedsApp.prototype, {
             </div>
             <div style="text-align:right">
               <span class="badge ${b.status==='confirmed'?'badge-s':'badge-w'}">${b.status}</span>
-              <div style="font-size:var(--text-sm);font-weight:700;margin-top:4px">${b.usedCredit?'<span style="color:var(--success)">Free (Credit)</span>':'₹'+b.price}</div>
+              <div style="font-size:var(--text-sm);font-weight:700;margin-top:4px"><span style="color:var(--success)">Free</span></div>
             </div>
           </div>
         </div>`).join('')}
@@ -81,20 +81,21 @@ Object.assign(DormedsApp.prototype, {
     </div>`;
   },
 
-  // ===== BPT BOOKING SCREEN =====
+  // ===== BPT BOOKING SCREEN — FREE FOR ALL =====
   cBptBook() {
     const sessions = this.db.get('bpt_sessions');
-    const { active, plan, bptCredits } = this.db.checkSubscription('U1');
-    const canUseCredit = active && plan?.id === 'SP2' && bptCredits > 0;
 
     return `<div class="c-home">
       <h2 style="font-size:var(--text-xl);margin-bottom:var(--s-2)">🧘 Book Physiotherapy Session</h2>
-      <p style="color:var(--text-secondary);font-size:var(--text-sm);margin-bottom:var(--s-5)">Certified BPT therapists · Home & clinic visits available</p>
-      ${canUseCredit?`<div class="card card-i" style="padding:var(--s-4);margin-bottom:var(--s-5);display:flex;align-items:center;gap:var(--s-3)">
-        <div style="font-size:24px">⭐</div>
-        <div><div style="font-weight:600;color:var(--primary)">You have ${bptCredits} free session${bptCredits>1?'s':''}</div>
-          <div style="font-size:11px;color:var(--text-muted)">Premium benefit · Use credits to book for free</div></div>
-      </div>`:''}
+      <p style="color:var(--text-secondary);font-size:var(--text-sm);margin-bottom:var(--s-5)">Certified BPT therapists · Home & clinic visits available · <strong style="color:var(--success)">Free for all users</strong></p>
+
+      <div class="card card-i" style="padding:var(--s-4);margin-bottom:var(--s-5);display:flex;align-items:center;gap:var(--s-3)">
+        <div style="font-size:24px">🎁</div>
+        <div>
+          <div style="font-weight:600;color:var(--primary)">Free Physiotherapy for Everyone</div>
+          <div style="font-size:11px;color:var(--text-muted)">No subscription required · Book sessions at no cost · Connect with nearby therapists</div>
+        </div>
+      </div>
 
       <div class="card" style="padding:var(--s-5);margin-bottom:var(--s-4)">
         <h4 style="margin-bottom:var(--s-4)">📋 Session Details</h4>
@@ -110,12 +111,12 @@ Object.assign(DormedsApp.prototype, {
             <label class="visit-opt" id="vopt-home" onclick="A.selectVisitType('home')" style="border:2px solid var(--primary);border-radius:var(--r-lg);padding:var(--s-4);cursor:pointer;text-align:center;background:var(--primary-subtle)">
               <div style="font-size:28px;margin-bottom:var(--s-2)">🏠</div>
               <div style="font-weight:600;font-size:var(--text-sm)">Home Visit</div>
-              <div style="font-size:11px;color:var(--text-muted)">₹800/session</div>
+              <div style="font-size:11px;color:var(--success);font-weight:600">FREE</div>
             </label>
             <label class="visit-opt" id="vopt-clinic" onclick="A.selectVisitType('clinic')" style="border:2px solid var(--border);border-radius:var(--r-lg);padding:var(--s-4);cursor:pointer;text-align:center">
               <div style="font-size:28px;margin-bottom:var(--s-2)">🏥</div>
               <div style="font-weight:600;font-size:var(--text-sm)">Clinic Visit</div>
-              <div style="font-size:11px;color:var(--text-muted)">₹500/session</div>
+              <div style="font-size:11px;color:var(--success);font-weight:600">FREE</div>
             </label>
           </div>
           <input type="hidden" id="bpt_visit_type" value="home"/>
@@ -133,16 +134,10 @@ Object.assign(DormedsApp.prototype, {
           </div>
           <input type="hidden" id="bpt_slot" value=""/>
         </div>
-
-        ${canUseCredit?`
-        <div style="display:flex;align-items:center;gap:var(--s-3);padding:var(--s-3);background:var(--primary-subtle);border-radius:var(--r-md);margin-bottom:var(--s-4)">
-          <input type="checkbox" id="useCredit" style="width:18px;height:18px" checked/>
-          <label for="useCredit" style="font-size:var(--text-sm);font-weight:600;color:var(--primary);cursor:pointer">Use 1 Premium Credit (Free Session)</label>
-        </div>`:''}
       </div>
 
       <button class="btn btn-p btn-block btn-lg" onclick="A.confirmBptBooking()">
-        🧘 Confirm Booking
+        🧘 Confirm Free Booking — Connect with Nearby Therapist
       </button>
     </div>`;
   },
@@ -180,23 +175,17 @@ Object.assign(DormedsApp.prototype, {
     const day = document.getElementById('bpt_day')?.value;
     const slot = document.getElementById('bpt_slot')?.value;
     const visitType = document.getElementById('bpt_visit_type')?.value || 'home';
-    const useCredit = document.getElementById('useCredit')?.checked;
     const therapist = document.getElementById('bpt_therapist')?.value;
     if (!condition) { this.toast('Please describe your condition', 'error'); return; }
     if (!slot) { this.toast('Please select a time slot', 'error'); return; }
-    const price = visitType === 'home' ? 800 : 500;
     const now = new Date();
     this.db.add('bpt_bookings', {
       id: 'BB'+Date.now(), userId:'U1', day, slot, visitType, therapist,
-      condition, price: useCredit?0:price, status:'confirmed',
-      address:'42, Sector 15, Noida, UP 201301', usedCredit:!!useCredit,
+      condition, price: 0, status:'confirmed',
+      address:'42, Sector 15, Noida, UP 201301', usedCredit: false,
       createdAt:now.toISOString(), sessionDate: 'Upcoming '+day
     });
-    if (useCredit) {
-      const sub = this.db.get('subscriptions').find(s=>s.userId==='U1'&&s.status==='active');
-      if (sub) this.db.update('subscriptions', sub.id, {bptUsed:(sub.bptUsed||0)+1});
-    }
-    this.toast(`✅ BPT Session booked for ${day} at ${slot}!`);
+    this.toast(`✅ BPT Session booked! Your nearby therapist will contact you for ${day} at ${slot}.`);
     location.hash = '#/customer/services';
   },
 
@@ -294,7 +283,7 @@ Object.assign(DormedsApp.prototype, {
   },
 
   showFeatureLock(feature) {
-    const featureNames = { bpt:'Physiotherapy (BPT) Sessions', counsellor:'Patient Counsellor', health_reports:'Health Reports' };
+    const featureNames = { counsellor:'Patient Counsellor', health_reports:'Health Reports' };
     document.getElementById('modal-root').innerHTML = `
       <div class="modal-ov" onclick="document.getElementById('modal-root').innerHTML=''">
       <div class="modal" onclick="event.stopPropagation()" style="max-width:360px;text-align:center">

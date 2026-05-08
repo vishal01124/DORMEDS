@@ -354,7 +354,7 @@ const SEED = {
       benefits:['Free delivery on all orders','10% off all medicines','Priority order processing','Smart refill reminders'],
       icon:'💊', popular:false, createdAt:'2025-01-01' },
     { id:'SP2', name:'Premium', price:499, period:'monthly', color:'#8B5CF6',
-      benefits:['Everything in Basic','2 free BPT sessions/month','Priority lab test booking','Patient counsellor access','Exclusive health reports','15% off all services'],
+      benefits:['Everything in Basic','Priority lab test booking','Patient counsellor access','Exclusive health reports','15% off all services'],
       icon:'⭐', popular:true, createdAt:'2025-01-01' },
   ],
 
@@ -484,7 +484,7 @@ const SEED = {
       body:'Your order O2 is on the way! Ravi Kumar is delivering.', read:false,
       link:'#/customer/tracking/O2', ts:'2025-04-14T09:31:00Z' },
     { id:'N3', userId:'U1', type:'subscription', icon:'💳', title:'Subscription Active',
-      body:'Your Premium plan is active. Enjoy free BPT sessions and priority labs!', read:false,
+      body:'Your Premium plan is active. Enjoy priority labs and exclusive health reports!', read:false,
       link:'#/customer/subscription', ts:'2025-04-01T10:00:00Z' },
     { id:'N4', userId:'U1', type:'health', icon:'💊', title:'Medicine Reminder',
       body:'Time to take your Becosules Z (B-Complex). Stay healthy!', read:false,
@@ -535,7 +535,7 @@ class DormedsDB {
   _init() {
     const isReady = localStorage.getItem(DB_PREFIX + 'ready');
     const version = localStorage.getItem(DB_PREFIX + 'version');
-    const CURRENT_VERSION = '4.0';
+    const CURRENT_VERSION = '5.0';
     if (!isReady || version !== CURRENT_VERSION) {
       // Clear old data and re-seed
       const toRemove = [];
@@ -774,8 +774,10 @@ class DormedsDB {
   // Feature access gating
   isFeatureAllowed(userId, feature) {
     const { active, plan } = this.checkSubscription(userId);
+    // BPT is free for ALL users — no subscription required
+    if (feature === 'bpt') return true;
     if (!active) return false;
-    const premiumFeatures = ['bpt', 'lab_priority', 'counsellor', 'health_reports'];
+    const premiumFeatures = ['lab_priority', 'counsellor', 'health_reports'];
     if (premiumFeatures.includes(feature)) return plan?.id === 'SP2';
     // Basic features available to all subscribers
     return true;
